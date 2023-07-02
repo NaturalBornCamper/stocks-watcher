@@ -218,6 +218,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.htaccess
 
 # Spyder project settings
 .spyderproject
