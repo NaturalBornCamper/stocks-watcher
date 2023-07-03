@@ -4,7 +4,7 @@ from watcher.utils import getenv
 ALLOWED_HOSTS = getenv('ALLOWED_HOSTS').split(',')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = getenv("DEBUG", False)
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
