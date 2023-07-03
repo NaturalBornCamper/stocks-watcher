@@ -1,46 +1,76 @@
 import requests
+from requests import Response
 
 from watcher.models import Stock, Price
 from watcher.utils import getenv
 
 # https://www.alphavantage.co/documentation/
 
+API_NAME = "Alpha Vantage"
 BASE_URL = "https://www.alphavantage.co/query"
 
 
-def fetch(stock: Stock, get_full_price_history: bool) -> list[Price] | str:
-    api_request = requests.get(
-        BASE_URL,
-        params={
-            'function': 'TIME_SERIES_DAILY_ADJUSTED',  # if it stops working: "TIME_SERIES_DAILY"
-            'symbol': stock.google_ticker,
-            'outputsize': 'full' if get_full_price_history else 'compact',
-            'apikey': getenv("ALPHAVANTAGE_API_KEY"),
+def fetch(stock: Stock, get_full_price_history: bool) -> dict:
+    symbol = stock.alphavantage_symbol if stock.alphavantage_symbol else stock.symbol
+    if symbol:
+        api_request = requests.get(
+            BASE_URL,
+            params={
+                'function': 'TIME_SERIES_DAILY_ADJUSTED',  # if it stops working: "TIME_SERIES_DAILY"
+                'symbol': stock.symbol,
+                'outputsize': 'full' if get_full_price_history else 'compact',
+                'apikey': getenv("ALPHAVANTAGE_API_KEY"),
+            }
+        )
+        api_result = {
+            "url": api_request.request.url,
+            "status_code": api_request.status_code,
+            "prices": [],
         }
-    )
-
-    result = []
-    if api_request.headers.get('content-type') == "application/json":
-        json = api_request.json()
-        if "Time Series (Daily)" in json:
-            for date, details in json["Time Series (Daily)"].items():
-                result.append(
-                    Price(
-                        stock=stock,
-                        date=date,
-                        low=details.get("3. low"),
-                        high=details.get("2. high"),
-                        open=details.get("1. open"),
-                        close=details.get("5. adjusted close", details.get("4. close")),
-                        volume=details.get("6. volume"),
-                    )
-                )
-        else:
-            result = f"{api_request.request.url} ({api_request.status_code})\n {json['Error Message']}"
     else:
-        result = f"{api_request.request.url} ({api_request.status_code})\n {api_request.content}"
+        return {
+            "url": "empty",
+            "status_code": 0,
+            "prices": [],
+            "success": False,
+            "message": f"No symbol provided for {stock.name}"
+        }
 
-    return result
+    try:
+        json = api_request.json()
+    except requests.exceptions.JSONDecodeError:
+        api_result["success"] = False
+        api_result["message"] = api_request.text
+        return api_result
+
+    if "Time Series (Daily)" in json:
+        for date, details in json["Time Series (Daily)"].items():
+            api_result["prices"].append(
+                Price(
+                    stock=stock,
+                    date=date,
+                    low=details.get("3. low"),
+                    high=details.get("2. high"),
+                    open=details.get("1. open"),
+                    close=details.get("5. adjusted close", details.get("4. close")),
+                    volume=details.get("6. volume"),
+                )
+            )
+        api_result["success"] = True
+    else:
+        api_result["success"] = False
+        api_result["message"] = get_json_error(api_request, json)
+
+    return api_result
+
+
+def get_json_error(api_request: Response, json: dict) -> str:
+    if error_message := json.get("Error Message"):
+        return error_message
+    elif error_message := json.get("Note"):
+        return error_message
+    else:
+        return api_request.text
 
 # AMZN stock split example AlphaVantage
 # https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=amzn&outputsize=full&apikey=XX

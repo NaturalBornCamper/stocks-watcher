@@ -6,7 +6,6 @@ import sys
 
 # Enter to the virtual environment.To enter to virtual environment, run the command: source /home/naturbl9/virtualenv/public_html/stocks-watcher.ashgun.com/3.9/bin/activate && cd /home/naturbl9/public_html/stocks-watcher.ashgun.com
 
-# TODO Primary key in Prices = stock_id, date. Add "update if exists" or ignore if exists
 # NOTE to see usage left for stocks API: https://iexcloud.io/console/usage
 
 def main():

@@ -1,45 +1,76 @@
+from pprint import pprint
+
 import requests
+from requests import Response
 
 from watcher.models import Stock, Price
 from watcher.utils import getenv
 
 # https://iexcloud.io/docs/core/HISTORICAL_PRICES
 
+API_NAME = "IEX Cloud"
 BASE_URL = "https://api.iex.cloud/v1/data/core/historical_prices/"
 
 
-def fetch(stock: Stock, get_full_price_history: bool) -> list[Price] | str:
-    api_request = requests.get(
-        BASE_URL + stock.google_ticker,
-        params={
-            'range': '1y' if get_full_price_history else '1w',
-            'token': getenv("IEX_API_KEY"),
+def fetch(stock: Stock, get_full_price_history: bool) -> dict:
+    symbol = stock.iex_symbol if stock.iex_symbol else stock.symbol
+    if symbol:
+        api_request = requests.get(
+            BASE_URL + stock.symbol,
+            params={
+                'range': '5y' if get_full_price_history else '1w',
+                'token': getenv("IEX_API_KEY"),
+            }
+        )
+        api_result = {
+            "url": api_request.request.url,
+            "status_code": api_request.status_code,
+            "prices": [],
         }
-    )
-
-    result = []
-    if api_request.headers.get('content-type') == "application/json":
-        json = api_request.json()
-        if type(json) is list:
-            for details in api_request.json():
-                result.append(
-                    Price(
-                        stock=stock,
-                        date=details.get("priceDate"),
-                        low=details.get("low"),
-                        high=details.get("high"),
-                        open=details.get("open"),
-                        close=details.get("close"),
-                        volume=details.get("volume"),
-                    )
-                )
-            return result
-        else:
-            result = f"{api_request.request.url} ({api_request.status_code})\n {api_request.content}"
     else:
-        result = f"{api_request.request.url} ({api_request.status_code})\n {api_request.content}"
+        return {
+            "url": "empty",
+            "status_code": 0,
+            "prices": [],
+            "success": False,
+            "message": f"No symbol provided for {stock.name}"
+        }
 
-    return result
+    try:
+        json = api_request.json()
+    except requests.exceptions.JSONDecodeError:
+        api_result["success"] = False
+        api_result["message"] = api_request.text
+        return api_result
+
+    if type(json) is list:
+        for details in json:
+            api_result["prices"].append(
+                Price(
+                    stock=stock,
+                    date=details["priceDate"],
+                    low=details["low"],
+                    high=details["high"],
+                    open=details["open"],
+                    close=details["close"],
+                    volume=details["volume"],
+                )
+            )
+        api_result["success"] = True
+    else:
+        api_result["success"] = False
+        api_result["message"] = get_json_error(api_request, json)
+
+    return api_result
+
+
+def get_json_error(api_request: Response, json: dict) -> str:
+    if error_message := json.get("Error Message"):
+        return error_message
+    elif error_message := json.get("Note"):
+        return error_message
+    else:
+        return api_request.text
 
 # AMZN stock split example IEX
 # https://api.iex.cloud/v1/data/core/historical_prices/amzn?range=14m&token=XX
