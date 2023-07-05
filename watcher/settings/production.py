@@ -1,3 +1,14 @@
+import os
+import sys
+from pathlib import Path
+with open("bob.txt", 'a') as f: f.write(f"Working directory: {os.getcwd()}\n")
+# sys.path.append(Path(__file__).resolve().parent)
+# sys.path.append(Path(__file__).resolve().parent.parent)
+# sys.path.append(Path(__file__).resolve().parent.parent.parent)
+
+for pat in sys.path:
+    with open("bob.txt", 'a') as f: f.write(f"path: {pat}\n")
+
 from watcher.settings.base import *
 from watcher.utils import getenv
 
@@ -6,21 +17,6 @@ ALLOWED_HOSTS = getenv('ALLOWED_HOSTS').split(',')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv("DEBUG", False)
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         'NAME': getenv('DATABASE_NAME'),
-#         'OPTIONS': {
-#             'options': '-c search_path=app'
-#         },
-#         'USER': getenv('DATABASE_USER'),
-#         'PASSWORD': getenv('DATABASE_PASSWORD'),
-#         'HOST': getenv('DATABASE_HOST', 'localhost'),
-#         'PORT': getenv('DATABASE_PORT', '5432'),
-#     }
-# }
 
 DATABASES = {
     "default": {
@@ -28,3 +24,5 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+STATIC_ROOT = os.path.join(BASE_DIR, "../static")

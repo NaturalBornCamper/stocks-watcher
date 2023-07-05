@@ -6,7 +6,21 @@ import sys
 
 # Enter to the virtual environment.To enter to virtual environment, run the command: source /home/naturbl9/virtualenv/public_html/stocks-watcher.ashgun.com/3.9/bin/activate && cd /home/naturbl9/public_html/stocks-watcher.ashgun.com
 
-# NOTE to see usage left for stocks API: https://iexcloud.io/console/usage
+# Option 1 (New one)
+# Settings
+# -public_html/stocks-watcher.ashgun.com/watcher application root in cPanel
+# -passenger_wsgi.py in watcher folder
+# Changes
+# -Need to add sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')) in wsgi.py
+# -STATIC_ROOT = os.path.join(BASE_DIR, "../static") in production.py
+
+# Option 2 (Old one) (Not sure if I can make static folder from root url
+# Settings
+# -public_html/stocks-watcher.ashgun.com application root in cPanel
+# -passenger_wsgi.py in root folder
+# Changes
+# -Maybe STATIC_ROOT = os.path.join(BASE_DIR, "watcher/static") in production.py
+
 
 def main():
     """Run administrative tasks."""
@@ -24,22 +38,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# msft uclose, fclose, close same
-# close*	number	Adjusted data for historical dates. Split adjusted only.
-# fclose*	number	Fully adjusted for historical dates
-# fhigh*	number	Fully adjusted for historical dates
-# flow*	number	Fully adjusted for historical dates
-# fopen*	number
-# fvolume*	number
-# high*	number	Adjusted data for historical dates. Split adjusted only.
-# low*	number	Adjusted data for historical dates. Split adjusted only.
-# open*	number	Adjusted data for historical dates. Split adjusted only.
-# priceDate* date	string
-# symbol* key	string	Associated symbol or ticker
-# uclose*	number	Unadjusted data for historical dates
-# uhigh*	number	Unadjusted data for historical dates
-# ulow*	number	Unadjusted data for historical dates
-# uopen*	number	Unadjusted data for historical dates
-# uvolume*	number	Unadjusted data for historical dates
-# volume*	number	Adjusted data for historical dates. Split adjusted only.
