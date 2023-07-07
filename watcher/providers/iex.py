@@ -19,7 +19,7 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         api_request = requests.get(
             BASE_URL + stock.symbol,
             params={
-                'range': '5y' if get_full_price_history else '1w',
+                'range': '10y' if get_full_price_history else '1w',
                 'token': getenv("IEX_API_KEY"),
             }
         )
