@@ -22,13 +22,35 @@ def send_email(to: str, subject: str, body: str):
         fail_silently=False,
     )
 
+# APIS IN STANDBY
+# polygon, # 5 calls per minute, 2 years historical, Don't have Canadian markets but it's on the roadmap
+# alpaca, # Contacted to see if they have CAD markets
+# tiingo, # 50/hour, 500 symbols per month, 1000/day, 30 years historical, TSX stocks are in USD, asked if can get in CAD
 
 def fetch_prices(request):
     # APIS to try in order, until successful
-    apis = [
+    # TODO 2 priority arrays, one for USD stocks and one for CAD stocks. Since CAD is often not supported with some APIs
+    usd_apis = [
         iex,
-        alpha_vantage,
+        alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
+        # twelve_data, # RapidAPI, 800/day, 8 requests per minute, TSX only available on paid plan
+        # finnhub, # 60/minute, worldwide stocks only paid
+        # marketstack, # 100/month, markets all over the world
+        # stockdata.org, # 100 per day, Can get TSX stocks details but no history
+        # financialmodelingprep, # 250/day, US only
+        # Mboum, # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance
+        # marketdata, 100/day, 1 year data, no TSX, strange format
+        # eodhistoricaldata, # 20/day, past year only, includes TSX
     ]
+
+    cad_apis = [
+        iex,
+        alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
+        # marketstack, # 100/month, markets all over the world
+        # Mboum, # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance
+        # eodhistoricaldata, # 20/day, past year only, includes TSX
+    ]
+    # TSX API: https://site.financialmodelingprep.com/developer/docs/tsx-prices-api/ (Didn't search correclty, first one I found, maybe better options)
 
     time_threshold = datetime.today() - timedelta(days=3)
     response = ""
@@ -38,7 +60,7 @@ def fetch_prices(request):
         get_full_price_history = stock.date_last_fetch is None
 
         response += f"Fetching \"{stock.name}\" prices, last fetch: {stock.date_last_fetch}\n"
-        for api in apis:
+        for api in (usd_apis if stock.currency == Stock.CURRENCY_USD else cad_apis):
             response += f"Using {api.API_NAME}\n"
             api_response = api.fetch(stock, get_full_price_history)
             if api_response["success"]:

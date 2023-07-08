@@ -5,6 +5,7 @@ from watcher.models import Stock, Price
 from watcher.utils import getenv
 
 # https://www.alphavantage.co/documentation/
+# https://rapidapi.com/alphavantage/api/alpha-vantage
 
 API_NAME = "Alpha Vantage"
 BASE_URL = "https://www.alphavantage.co/query"
@@ -16,7 +17,7 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         api_request = requests.get(
             BASE_URL,
             params={
-                'function': 'TIME_SERIES_DAILY_ADJUSTED',  # if it stops working: "TIME_SERIES_DAILY"
+                'function': 'TIME_SERIES_DAILY_ADJUSTED',  # if becomes premium: Use RapidAPI version instead
                 'symbol': stock.symbol,
                 'outputsize': 'full' if get_full_price_history else 'compact',
                 'apikey': getenv("ALPHAVANTAGE_API_KEY"),
@@ -49,11 +50,11 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
                 Price(
                     stock=stock,
                     date=date,
-                    low=details.get("3. low"),
-                    high=details.get("2. high"),
-                    open=details.get("1. open"),
-                    close=details.get("5. adjusted close", details.get("4. close")),
-                    volume=details.get("6. volume"),
+                    low=details["3. low"],
+                    high=details["2. high"],
+                    open=details["1. open"],
+                    close=details["5. adjusted close"],
+                    volume=details["6. volume"],
                 )
             )
         api_result["success"] = True

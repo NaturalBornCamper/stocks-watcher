@@ -4,6 +4,7 @@ from django.db.models import UniqueConstraint
 from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
 
 
+# TODO Stock Category (optional)? Then I need a category editor? Might be uselful of others want to use it
 class Stock(models.Model):
     CURRENCY_USD = "USD"
     CURRENCY_CAD = "CAD"
@@ -14,8 +15,8 @@ class Stock(models.Model):
     )
 
     name = models.CharField(max_length=255)
-    currency = models.CharField(max_length=255, choices=CURRENCIES)
-    market = models.CharField(max_length=10)
+    currency = models.CharField(max_length=255, choices=CURRENCIES, default="USD")
+    market = models.CharField(max_length=10, default="NASDAQ")
     symbol = models.CharField(max_length=10)
     google_symbol = models.CharField(max_length=10, blank=True, null=True, verbose_name="Google symbol (if different)")
     yahoo_symbol = models.CharField(max_length=10, blank=True, null=True, verbose_name="Yahoo symbol (if different)")
@@ -30,6 +31,7 @@ class Stock(models.Model):
     # Convert symbols to UPPERCASE
     def save(self, *args, **kwargs):
         self.symbol = self.symbol and self.symbol.upper()
+        self.market = self.market and self.market.upper()
         self.google_symbol = self.google_symbol and self.google_symbol.upper()
         self.yahoo_symbol = self.yahoo_symbol and self.yahoo_symbol.upper()
         self.seekingalpha_symbol = self.seekingalpha_symbol and self.seekingalpha_symbol.upper()
@@ -40,6 +42,8 @@ class Stock(models.Model):
     def __str__(self):
         return f"{self.name} ({self.market}: {self.symbol}) - {self.get_currency_display()} - ({self.price.count()} prices - {self.alert.count()} alerts)"
 
+    class Meta:
+        ordering = ["name"]
 
 class Price(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True, related_name="price")
@@ -59,11 +63,13 @@ class Price(models.Model):
                 fields=["stock", "date"]
             ),
         ]
+        ordering = ["-date", "stock"]
 
     def __str__(self):
         return f"{self.stock.name} - {self.date} - Open:{self.open}$ - Low:{self.low}$ - High:{self.high}$ - Close:{self.close}$"
 
 
+# Maybe find a way to make less alerts? Combine highest and lowest in X days maybe?
 class Alert(models.Model):
     TYPE_INTERVAL_CHEAPEST = 1
     TYPE_INTERVAL_HIGHEST = 2
@@ -91,3 +97,6 @@ class Alert(models.Model):
         bob = f"{self.value}$" if self.value else f"({self.days} days)"
         recipient = self.recipient if self.recipient else EMAIL_DEFAULT_RECIPIENT
         return self.name if self.name else f"{self.stock.name} - {self.get_type_display()} {bob} - Send to {recipient}"
+
+    class Meta:
+        ordering = ["stock", "type"]
