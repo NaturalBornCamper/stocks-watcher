@@ -22,10 +22,8 @@ class Stock(models.Model):
     yahoo_symbol = models.CharField(max_length=10, blank=True, null=True, verbose_name="Yahoo symbol (if different)")
     seekingalpha_symbol = models.CharField(max_length=10, blank=True, null=True,
                                            verbose_name="Seeking Alpha symbol (if different)")
-    alphavantage_symbol = models.CharField(max_length=10, blank=True, null=True,
-                                           verbose_name="Alpha Vantage API symbol (if different)")
-    iex_symbol = models.CharField(max_length=10, blank=True, null=True,
-                                  verbose_name="IEX Cloud API symbol (if different)")
+    marketstack_symbol = models.CharField(max_length=10, blank=True, null=True,
+                                  verbose_name="Marketstack API symbol (if different)")
     date_last_fetch = models.DateField(blank=True, null=True, verbose_name="Last API call date (leave empty)")
 
     # Convert symbols to UPPERCASE
@@ -35,8 +33,7 @@ class Stock(models.Model):
         self.google_symbol = self.google_symbol and self.google_symbol.upper()
         self.yahoo_symbol = self.yahoo_symbol and self.yahoo_symbol.upper()
         self.seekingalpha_symbol = self.seekingalpha_symbol and self.seekingalpha_symbol.upper()
-        self.alphavantage_symbol = self.alphavantage_symbol and self.alphavantage_symbol.upper()
-        self.iex_symbol = self.iex_symbol and self.iex_symbol.upper()
+        self.marketstack_symbol = self.marketstack_symbol and self.marketstack_symbol.upper()
         super(Stock, self).save(*args, **kwargs)
 
     def __str__(self):

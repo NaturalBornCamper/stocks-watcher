@@ -12,7 +12,7 @@ BASE_URL = "https://www.alphavantage.co/query"
 
 
 def fetch(stock: Stock, get_full_price_history: bool) -> dict:
-    symbol = stock.alphavantage_symbol if stock.alphavantage_symbol else stock.symbol
+    symbol = stock.symbol
     if symbol:
         api_request = requests.get(
             BASE_URL,
@@ -21,7 +21,7 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
                 'symbol': stock.symbol,
                 'outputsize': 'full' if get_full_price_history else 'compact',
                 'apikey': getenv("ALPHAVANTAGE_API_KEY"),
-            }
+            },
         )
         api_result = {
             "url": api_request.request.url,

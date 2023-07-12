@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from pyrotools.console import cprint, COLORS
 
 from watcher.models import Stock, Price, Alert
-from watcher.providers import alpha_vantage, iex
+from watcher.providers import alpha_vantage, iex, mboum, marketstack
 from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
 from watcher.utils import getenv
 
@@ -33,21 +33,20 @@ def fetch_prices(request):
     usd_apis = [
         iex,
         alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
+        mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
+        marketstack,  # 100/month, markets all over the world, only 1 year data
         # twelve_data, # RapidAPI, 800/day, 8 requests per minute, TSX only available on paid plan
         # finnhub, # 60/minute, worldwide stocks only paid
-        # marketstack, # 100/month, markets all over the world
         # stockdata.org, # 100 per day, Can get TSX stocks details but no history
         # financialmodelingprep, # 250/day, US only
-        # Mboum, # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance
         # marketdata, 100/day, 1 year data, no TSX, strange format
         # eodhistoricaldata, # 20/day, past year only, includes TSX
     ]
 
     cad_apis = [
-        iex,
+        mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
-        # marketstack, # 100/month, markets all over the world
-        # Mboum, # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance
+        marketstack,  # 100/month, markets all over the world, only 1 year data
         # eodhistoricaldata, # 20/day, past year only, includes TSX
     ]
     # TSX API: https://site.financialmodelingprep.com/developer/docs/tsx-prices-api/ (Didn't search correclty, first one I found, maybe better options)
@@ -59,13 +58,13 @@ def fetch_prices(request):
                  :MAX_API_QUERY]:
         get_full_price_history = stock.date_last_fetch is None
 
-        response += f"Fetching \"{stock.name}\" prices, last fetch: {stock.date_last_fetch}\n"
+        response += f"******Fetching \"{stock.name}\" prices, last fetch: {stock.date_last_fetch}******\n"
         for api in (usd_apis if stock.currency == Stock.CURRENCY_USD else cad_apis):
             response += f"Using {api.API_NAME}\n"
             api_response = api.fetch(stock, get_full_price_history)
             if api_response["success"]:
                 Price.objects.bulk_create(api_response["prices"], ignore_conflicts=True)
-                response += f"{stock.name} {len(api_response['prices'])} rows inserted\n\n"
+                response += f"{len(api_response['prices'])} rows inserted\n\n"
                 stock.date_last_fetch = datetime.today()
                 stock.save()
                 break

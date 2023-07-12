@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import requests
 from requests import Response
 
@@ -10,18 +8,18 @@ from watcher.utils import getenv
 # https://iexcloud.io/docs/core/HISTORICAL_PRICES
 
 API_NAME = "IEX Cloud"
-BASE_URL = "https://api.iex.cloud/v1/data/core/historical_prices/"
+BASE_URL = "https://api.iex.cloud/v1/data/core/historical_prices"
 
 
 def fetch(stock: Stock, get_full_price_history: bool) -> dict:
-    symbol = stock.iex_symbol if stock.iex_symbol else stock.symbol
+    symbol = stock.symbol
     if symbol:
         api_request = requests.get(
-            BASE_URL + stock.symbol,
+            f"{BASE_URL}/{stock.symbol}",
             params={
                 'range': '10y' if get_full_price_history else '1w',
                 'token': getenv("IEX_API_KEY"),
-            }
+            },
         )
         api_result = {
             "url": api_request.request.url,
