@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from pyrotools.console import cprint, COLORS
 
 from watcher.models import Stock, Price, Alert
-from watcher.providers import alpha_vantage, iex, mboum, marketstack
+from watcher.providers import alpha_vantage, iex, mboum, marketstack, eodhd
 from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
 from watcher.utils import getenv
 
@@ -22,6 +22,7 @@ def send_email(to: str, subject: str, body: str):
         fail_silently=False,
     )
 
+
 # APIS IN STANDBY
 # polygon, # 5 calls per minute, 2 years historical, Don't have Canadian markets but it's on the roadmap
 # alpaca, # Contacted to see if they have CAD markets
@@ -34,6 +35,7 @@ def fetch_prices(request):
         iex,
         alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
         mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
+        eodhd,  # 20/day, past year only, includes TSX
         marketstack,  # 100/month, markets all over the world, only 1 year data
         # twelve_data, # RapidAPI, 800/day, 8 requests per minute, TSX only available on paid plan
         # finnhub, # 60/minute, worldwide stocks only paid
@@ -46,12 +48,11 @@ def fetch_prices(request):
     cad_apis = [
         mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
+        eodhd,  # 20/day, past year only, includes TSX
         marketstack,  # 100/month, markets all over the world, only 1 year data
-        # eodhistoricaldata, # 20/day, past year only, includes TSX
     ]
     # TSX API: https://site.financialmodelingprep.com/developer/docs/tsx-prices-api/ (Didn't search correclty, first one I found, maybe better options)
 
-    time_threshold = datetime.today() - timedelta(days=3)
     response = ""
     error_triggered = False
     for stock in Stock.objects.filter(Q(date_last_fetch__lt=datetime.today()) | Q(date_last_fetch=None)).all()[
