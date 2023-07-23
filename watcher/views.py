@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from pyrotools.console import cprint, COLORS
 
 from watcher.models import Stock, Price, Alert
-from watcher.providers import alpha_vantage, iex, mboum, marketstack, eodhd
+from watcher.providers import alpha_vantage, iex, mboum, marketstack, eodhd, alpha_vantage_rapidapi
 from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
 from watcher.utils import getenv
 
@@ -35,6 +35,7 @@ def fetch_prices(request):
     # TODO 2 priority arrays, one for USD stocks and one for CAD stocks. Since CAD is often not supported with some APIs
     usd_apis = [
         alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
+        alpha_vantage_rapidapi,  # 5/minute, 500/day, adjusted close works with free
         mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         eodhd,  # 20/day, past year only, includes TSX
         marketstack,  # 100/month, markets all over the world, only 1 year data

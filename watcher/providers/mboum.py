@@ -24,7 +24,7 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
             },
             headers={
                 'X-RapidAPI-Host': 'mboum-finance.p.rapidapi.com',
-                'X-RapidAPI-Key': getenv('MBOUM_API_KEY'),
+                'X-RapidAPI-Key': getenv('RAPIDAPI_API_KEY'),
             },
         )
         api_result = {

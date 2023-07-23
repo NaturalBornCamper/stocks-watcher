@@ -4,10 +4,10 @@ from requests import Response
 from watcher.models import Stock, Price
 from watcher.utils import getenv
 
-# https://www.alphavantage.co/documentation/
+# https://rapidapi.com/alphavantage/api/alpha-vantage
 
-API_NAME = "Alpha Vantage"
-BASE_URL = "https://www.alphavantage.co/query"
+API_NAME = "Alpha Vantage Rapid API"
+BASE_URL = "https://alpha-vantage.p.rapidapi.com/query""
 
 
 def fetch(stock: Stock, get_full_price_history: bool) -> dict:
@@ -20,7 +20,10 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
                 'symbol': stock.symbol,
                 'outputsize': 'full' if get_full_price_history else 'compact',
                 'datatype': 'json',
-                'apikey': getenv("ALPHAVANTAGE_API_KEY"),
+            },
+            headers={
+                'X-RapidAPI-Host': 'mboum-finance.p.rapidapi.com',
+                'X-RapidAPI-Key': getenv('RAPIDAPI_API_KEY'),
             },
         )
         api_result = {
