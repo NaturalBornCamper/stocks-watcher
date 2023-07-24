@@ -7,7 +7,7 @@ from watcher.utils import getenv
 # https://rapidapi.com/alphavantage/api/alpha-vantage
 
 API_NAME = "Alpha Vantage Rapid API"
-BASE_URL = "https://alpha-vantage.p.rapidapi.com/query""
+BASE_URL = "https://alpha-vantage.p.rapidapi.com/query"
 
 
 def fetch(stock: Stock, get_full_price_history: bool) -> dict:
