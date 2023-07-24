@@ -34,7 +34,6 @@ def fetch_prices(request):
     # APIS to try in order, until successful
     # TODO 2 priority arrays, one for USD stocks and one for CAD stocks. Since CAD is often not supported with some APIs
     usd_apis = [
-        alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
         alpha_vantage_rapidapi,  # 5/minute, 500/day, adjusted close works with free
         mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         eodhd,  # 20/day, past year only, includes TSX
@@ -46,6 +45,7 @@ def fetch_prices(request):
         # financialmodelingprep, # 250/day, US only
         # marketdata, 100/day, 1 year data, no TSX, strange format
         # eodhistoricaldata, # 20/day, past year only, includes TSX
+        # alpha_vantage,  # 5/minute, 500/day, "adjusted close" for premium
     ]
 
     cad_apis = [

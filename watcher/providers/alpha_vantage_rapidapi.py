@@ -22,7 +22,7 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
                 'datatype': 'json',
             },
             headers={
-                'X-RapidAPI-Host': 'mboum-finance.p.rapidapi.com',
+                'X-RapidAPI-Host': 'alpha-vantage.p.rapidapi.com',
                 'X-RapidAPI-Key': getenv('RAPIDAPI_API_KEY'),
             },
         )
