@@ -17,10 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from watcher.views import fetch_prices, send_alerts
+from watcher.views.cron import fetch_prices, send_alerts
+# from watcher.views.quant import score, historical, count
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("fetch_prices/", fetch_prices),
     path("send_alerts/", send_alerts),
+    # path("quant/", score),
+    # path("quant/score", score),
+    # path("quant/count", count),
+    # path("quant/historical", historical),
 ]

@@ -13,7 +13,8 @@ from watcher.utils import getenv
 MAX_API_QUERY = 5
 
 
-# TODO Do NOT update date if today has no price
+# TODO Do NOT update date if today has no price (weekend, jours fériés)
+# After cheapest in x days, warn again once it goes back up y% or more (to know when it's done going down)
 
 def send_email(to: str, subject: str, body: str):
     send_mail(
@@ -22,6 +23,7 @@ def send_email(to: str, subject: str, body: str):
         getenv("FROM_EMAIL"),
         [to],
         fail_silently=False,
+        html_message=body,
     )
 
 
@@ -86,6 +88,7 @@ def fetch_prices(request):
     return HttpResponse(response)
 
 
+# TODO Maybe tweak "lowest in X days" or make a new one to get alert when the stock price has been going back up 10% after the low
 def send_alerts(request):
     for alert in Alert.objects.filter(enabled=True).all():
         last_price = Price.objects.filter(stock=alert.stock).order_by("-date").first()
@@ -120,6 +123,7 @@ def send_alerts(request):
                 pass
 
         if subject and body:
+            body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{alert.stock.symbol}\">https://ca.finance.yahoo.com/quote/{alert.stock.symbol}</a>"
             cprint(COLORS.BRIGHT_BLUE, subject)
             cprint(COLORS.BRIGHT_BLUE, body)
             send_email(

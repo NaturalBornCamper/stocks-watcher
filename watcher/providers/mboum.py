@@ -43,9 +43,12 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
 
     try:
         json = api_request.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exc:
         api_result["success"] = False
-        api_result["message"] = api_request.text
+        api_result["message"] = f"Error decoding JSON: {str(exc)}. Encoded in {api_request.encoding}. Args = {exc.args}. response = {api_request.text}"
+        # print(api_request.encoding)  # To try to see why mboum's perfectly fine json can't be decoded
+        # print(exc.args)  # To try to see why mboum's perfectly fine json can't be decoded
+        # print(f"Error decoding JSON: {str(exc)}")  # To try to see why mboum's perfectly fine json can't be decoded
         return api_result
 
     if 'items' in json:

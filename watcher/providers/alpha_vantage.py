@@ -16,7 +16,8 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         api_request = requests.get(
             BASE_URL,
             params={
-                'function': 'TIME_SERIES_DAILY_ADJUSTED',
+                'function': 'TIME_SERIES_DAILY',
+                # 'function': 'TIME_SERIES_DAILY_ADJUSTED',  # They finally woke up and made it premium properly
                 'symbol': stock.symbol,
                 'outputsize': 'full' if get_full_price_history else 'compact',
                 'datatype': 'json',

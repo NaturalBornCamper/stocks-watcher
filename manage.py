@@ -4,7 +4,12 @@ import os
 import sys
 
 
+# Sell on highest in the month?
+
 # TODO Add favicon
+# TODO Put alerts for cheapest in 2 weeks also for the stocks I really want to invest
+# TODO Find a way to not update stock last fetch date if updated before 5pm (closing price not available yet). Change field to datetime and look if less than 5pm instead?
+# TODO Add watches in portfolio to quickly see the changes in one place (Compare every end of day with previous day and trigger if X% change or more)
 
 def main():
     """Run administrative tasks."""
