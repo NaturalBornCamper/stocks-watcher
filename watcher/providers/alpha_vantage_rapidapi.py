@@ -63,18 +63,20 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         api_result["success"] = True
     else:
         api_result["success"] = False
-        api_result["message"] = get_json_error(api_request, json)
+        api_result["message"] = get_json_error(api_request, json, "Time Series (Daily)")
 
     return api_result
 
 
-def get_json_error(api_request: Response, json: dict) -> str:
+def get_json_error(api_request: Response, json: dict, missing_parameter: str = "") -> str:
     if error_message := json.get("Error Message"):
         return error_message
     elif error_message := json.get("Information"):
         return error_message
     elif error_message := json.get("Note"):
         return error_message
+    elif missing_parameter:
+        return f"\"{missing_parameter}\" not found in json: {api_request.text}"
     else:
         return api_request.text
 

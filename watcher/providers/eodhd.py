@@ -63,10 +63,13 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         api_result["success"] = True
     else:
         api_result["success"] = False
-        api_result["message"] = get_json_error(api_request, json)
+        api_result["message"] = get_json_error(api_request, json, True)
 
     return api_result
 
 
-def get_json_error(api_request: Response, json: dict) -> str:
-    return api_request.text
+def get_json_error(api_request: Response, json: dict, incorrect_json_format: bool = False) -> str:
+    if incorrect_json_format:
+        return f"Received json data is not a list as expected json: {api_request.text}"
+    else:
+        return api_request.text

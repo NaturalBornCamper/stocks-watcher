@@ -45,13 +45,10 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         json = api_request.json()
     except requests.exceptions.JSONDecodeError as exc:
         api_result["success"] = False
-        api_result["message"] = f"Error decoding JSON: {str(exc)}. Encoded in {api_request.encoding}. Args = {exc.args}. response = {api_request.text}"
-        # print(api_request.encoding)  # To try to see why mboum's perfectly fine json can't be decoded
-        # print(exc.args)  # To try to see why mboum's perfectly fine json can't be decoded
-        # print(f"Error decoding JSON: {str(exc)}")  # To try to see why mboum's perfectly fine json can't be decoded
+        api_result["message"] = f"Error decoding JSON: {api_request.text}"
         return api_result
 
-    if 'items' in json:
+    if 'body' in json:
         for timestamp, details in json['items'].items():
             api_result["prices"].append(
                 Price(
@@ -67,13 +64,15 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         api_result["success"] = True
     else:
         api_result["success"] = False
-        api_result["message"] = get_json_error(api_request, json)
+        api_result["message"] = get_json_error(api_request, json, "body")
 
     return api_result
 
 
-def get_json_error(api_request: Response, json: dict) -> str:
+def get_json_error(api_request: Response, json: dict, missing_parameter: str = "") -> str:
     if error_message := json.get("error"):
         return error_message
+    elif missing_parameter:
+        return f"\"{missing_parameter}\" not found in json: {api_request.text}"
     else:
         return api_request.text

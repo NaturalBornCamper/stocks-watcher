@@ -47,19 +47,26 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         return api_result
 
     if 'error' not in json:
-        for details in json['data']['eod']:
-            api_result["prices"].append(
-                Price(
-                    stock=stock,
-                    date=datetime.strptime(details["date"], '%Y-%m-%dT%H:%M:%S%z').strftime('%Y-%m-%d'),
-                    low=details["adj_low"] if details["adj_low"] else details["low"],
-                    high=details["adj_high"] if details["adj_high"] else details["high"],
-                    open=details["adj_open"] if details["adj_open"] else details["open"],
-                    close=details["adj_close"] if details["adj_close"] else details["close"],
-                    volume=details["adj_volume"] if details["adj_volume"] else details["volume"],
+        if "data" not in json:
+            api_result["success"] = False
+            api_result["message"] = get_json_error(api_request, json, "data")
+        elif "eod" not in json["data"]:
+            api_result["success"] = False
+            api_result["message"] = get_json_error(api_request, json, "[data][eod]")
+        else:
+            for details in json['data']['eod']:
+                api_result["prices"].append(
+                    Price(
+                        stock=stock,
+                        date=datetime.strptime(details["date"], '%Y-%m-%dT%H:%M:%S%z').strftime('%Y-%m-%d'),
+                        low=details["adj_low"] if details["adj_low"] else details["low"],
+                        high=details["adj_high"] if details["adj_high"] else details["high"],
+                        open=details["adj_open"] if details["adj_open"] else details["open"],
+                        close=details["adj_close"] if details["adj_close"] else details["close"],
+                        volume=details["adj_volume"] if details["adj_volume"] else details["volume"],
+                    )
                 )
-            )
-        api_result["success"] = True
+            api_result["success"] = True
     else:
         api_result["success"] = False
         api_result["message"] = get_json_error(api_request, json)
@@ -67,8 +74,10 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
     return api_result
 
 
-def get_json_error(api_request: Response, json: dict) -> str:
+def get_json_error(api_request: Response, json: dict, missing_parameter: str = "") -> str:
     if error_message := json.get("error", {}).get("message"):
         return error_message
+    elif missing_parameter:
+        return f"\"{missing_parameter}\" not found in json: {api_request.text}"
     else:
         return api_request.text
