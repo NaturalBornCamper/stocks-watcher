@@ -53,7 +53,7 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
             api_result["prices"].append(
                 Price(
                     stock=stock,
-                    date=datetime.strptime(details["date"], '%m-%d-%Y').strftime('%Y-%m-%d'),
+                    date=datetime.strptime(details["date"], '%d-%m-%Y').strftime('%Y-%m-%d'),
                     low=details["low"],
                     high=details["high"],
                     open=details["open"],
