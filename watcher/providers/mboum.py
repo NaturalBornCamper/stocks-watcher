@@ -49,7 +49,7 @@ def fetch(stock: Stock, get_full_price_history: bool) -> dict:
         return api_result
 
     if 'body' in json:
-        for timestamp, details in json['items'].items():
+        for timestamp, details in json['body'].items():
             api_result["prices"].append(
                 Price(
                     stock=stock,
