@@ -23,7 +23,7 @@ def send_email(to: str, subject: str, body: str):
         getenv("FROM_EMAIL"),
         [to],
         fail_silently=False,
-        html_message=body,
+        html_message=body.replace("\n", "<br>"),
     )
 
 
