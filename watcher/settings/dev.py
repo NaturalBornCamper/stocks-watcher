@@ -1,3 +1,5 @@
+import os
+
 from watcher.settings.base import *
 
 from watcher.utils.helpers import getenv
