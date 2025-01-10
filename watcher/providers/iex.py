@@ -2,7 +2,7 @@ import requests
 from requests import Response
 
 from watcher.models import Stock, Price
-from watcher.utils import getenv
+from watcher.utils.helpers import getenv
 
 # NOTE to see usage left for stocks API: https://iexcloud.io/console/usage
 # https://iexcloud.io/docs/core/HISTORICAL_PRICES

@@ -1,0 +1,5 @@
+{% extends 'quant.html' %}
+
+{% block content %}
+    {% include "datatables/h.category-v.stock.html" with data=quant_list value_to_display=value_to_display %}
+{% endblock %}

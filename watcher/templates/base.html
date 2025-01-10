@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Page Title{% endblock title %}</title>
+    {% block head_css %}
+        <!-- Any inline CSS to load in this page -->
+    {% endblock head_css %}
+    <link rel="icon" sizes="48x48" type="image/png" href="{% static 'stocks-48.png' %}">
+    <link rel="icon" sizes="96x96" type="image/png" href="{% static 'stocks-96.png' %}">
+</head>
+<body>
+{% block content %}
+    <!-- Main Content -->
+{% endblock content %}
+
+{% block footer_js %}
+    <!-- Any inline JS to load at after the DOM is loaded -->
+{% endblock footer_js %}
+</body>
+</html>

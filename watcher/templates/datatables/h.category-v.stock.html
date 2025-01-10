@@ -1,0 +1,32 @@
+{% load quant_filters %}
+<table cellpadding="2" border="1" class="sortable">
+    <tr>
+        <th>Stock</th>
+        <th>Seeking Alpha</th>
+        <th>Yahoo Finance</th>
+        {% get_types as types %}
+        {% for type in types.values %}
+            <th>{{ type }}</th>
+        {% endfor %}
+    </tr>
+    {% for symbol, stock in data.items %}
+        <tr>
+            <td>
+                {{ symbol }}
+            </td>
+            <td>
+                <a href="https://seekingalpha.com/symbol/{{ symbol }}">OPEN</a>
+            </td>
+            <td>
+                <a href="https://ca.finance.yahoo.com/quote/{{ symbol }}">OPEN</a>
+            </td>
+            {% for type in stock.values %}
+                {% if value_to_display == "score" %}
+                    <td data-sort="{{ type.score }}" title="Count: {{ type.count }}">{{ type.score }} ({{ type.count }})</td>
+                {% elif value_to_display == "count" %}
+                    <td data-sort="{{ type.count }}" title="Score: {{ type.score }}">{{ type.count }}</td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>

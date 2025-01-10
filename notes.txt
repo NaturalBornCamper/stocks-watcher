@@ -1,0 +1,56 @@
+
+STEPS ASAP:
+-Cleanup
+ //Comment better what's happening in compile_quant
+ Link in email doesn't use Yahoo symbol if there's one (uses regular symbol. AC instead of AC.TO, which sends to wrong stock)
+ Set a prefix and suffix for each API for when fetching stocks. For example CA_SUFFIX=".XSTE" or CA_SUFFIX=".TO" but I think there is always just a suffix
+ Also set application settings for yahoo_ca_suffix, google_ca_prefix, seeking_alpha_ca_prefix so that when the email has a link to the stock on Yahoo, etc. it adds the prefix/suffix
+ Finish up Quant cronjob so I can update the server's LOWER_THAN cronjob
+ ^Commit after that^ too much unfinished code
+-Finish compiled quant cronjob
+-Each provider:
+ CAD_PREFIX = ''
+ CAD_SUFFIX = ''
+-Alerts
+ Make a model for "less than x days" and "more than x days" alerts
+ AND a model for "target prices", so they are not all mixed up
+ And I can set a >30 days with a note (Buy VOO if extra unused money), as well as a >60 days for another note (buy VOO for kids for example)
+-Find way to make a secondary alert system
+ Only one DB entry per stock, so maybe put it directly in the stock?
+ Have a float value for How many minimum days to check for highest value, and another for lowest value
+  Makes sense directly in stock, then a null value means no alert? At the same time time not because alerts should be in an alert
+ Has checkboxes maybe, to activate when prices change for 5% 10% 15%
+  Not sure 3 checkboxes is good, need to find a way to make it a custom value but still not have 3 alerts to create to have 3%, 5% and 7%
+-Make different quant compilations
+ One with decay value going down linearly
+ One with decay value going down with 1/x function (Or maybe a bit less strong? 1/x might be perfect though)
+
+
+-Todo/sort/ideas from messenger
+ Have page for stock quant details, showing the history of each type of quant it was in
+ Have page showing average "quant" column of the Quant table for each stock instead of my own custom score
+ Page for average of each category.
+  For example top technology, all stocks that were in at least once have the total time they were in, the average of each column, their calculated rank
+ https://docs.djangoproject.com/en/5.0/topics/http/urls/#passing-extra-options-to-view-functions
+ Add Zacks monthly top 5. Or top 10? Also free 30 days
+-Quant ratings
+ What I want to see
+  A score per stock
+   100-rank august 2023 + 100-rank august 2022 + ... = score for each time stock is in the quant
+    Sometimes I will get quand once per year, sometimes once per month, sometimes at the beginning and end of month. So find a way to calculate that
+  When a stock has been X times in quant, X times in value, X time in top tech, etc
+ DB
+  tables
+   A table per quant type? If I choose to do this, they can all be moved in there later
+   A table per month? Nope
+   A table where all are mixed?
+-Need a way to clear prices for a stock (when there was a split for example)
+ Maybe in Django admin, can have a filter instead of just list all prices from all stocks? But then we'd need also to have more than 100 per page (Maybe not, looks like there's a "show all". For example at the bottom of game library: admin/library/game/?other=no_tag&platforms__id__exact=11
+
+
+-Log system
+ Make log function like Swarm Control, with level
+ Log all prints better in function
+-Database
+ Add "notes" in alert, so that I remember why I made it and it tells me in email. What about cheapest in at least x days though? Need notes on this one too, maybe just make unique key [stock, xdays, lessthan]? Dirty.. find a way
+

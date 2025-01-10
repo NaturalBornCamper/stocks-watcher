@@ -1,20 +1,23 @@
 from datetime import datetime, timedelta
+from pprint import pprint
 
 from django.core.mail import send_mail
-from django.db.models import Q
+from django.db.models import F, ExpressionWrapper, fields
+from django.db.models import Q, Count, Sum, Value, Max
+from django.forms import DurationField
 from django.http import HttpResponse
 from pyrotools.console import cprint, COLORS
+from pyrotools.log import Log
 
-from watcher.models import Stock, Price, Alert
-from watcher.providers import alpha_vantage, iex, mboum, marketstack, eodhd, alpha_vantage_rapidapi
+from watcher.models import Stock, Price, Alert, Quant, CompiledQuant
+from watcher.providers import alpha_vantage, mboum, marketstack, eodhd, alpha_vantage_rapidapi
 from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
-from watcher.utils import getenv
+from watcher.utils.helpers import getenv
 
 MAX_API_QUERY = 5
+MAX_QUANT_TYPES_PER_RUN = 5
+DECAY_FACTOR = 0.05
 
-
-# TODO Do NOT update date if today has no price (weekend, jours fériés)
-# After cheapest in x days, warn again once it goes back up y% or more (to know when it's done going down)
 
 def send_email(to: str, subject: str, body: str):
     send_mail(
@@ -27,16 +30,35 @@ def send_email(to: str, subject: str, body: str):
     )
 
 
-# APIS IN STANDBY
-# polygon, # 5 calls per minute, 2 years historical, Don't have Canadian markets but it's on the roadmap
-# alpaca, # Contacted to see if they have CAD markets
-# tiingo, # 50/hour, 500 symbols per month, 1000/day, 30 years historical, TSX stocks are in USD, asked if can get in CAD
+# TODO Kind of important and messy: For Canadian stocks, Either:
+#  -I write the official symbol=AC then yahoo_symbol=AC.TO, but APIs will get "Associated Capital Group" instead.
+#  -I write symbol=AC.TO and yahoo_symbol=AC.TO, then APIs will get the correct stock but yahoo_symbol is useless.
+#  Maybe get rid of all the extra symbols and in the app settings, have yahoo_suffix=.TO google_suffix=:TSE, seeking_alpha_prefix=CA:
+#   But then either:
+#   -I write symbol=AC and I have the same problem with the API
+#   -I write symbol=AC.TO, and it will become AC.TO:TSE once Google suffix is applied
+#   -I apply the yahoo suffix every time for APIs
+#   -I write symbol=AC and each API has a prefix/suffix for CAD stocks
+# TODO Add API financialmodelingprep
+#  https://financialmodelingprep.com/api/v3/historical-price-full/AAPL?apikey=d6IlFcraIFtrd0IDklzrPE9wf1T3X3b7
+#  https://site.financialmodelingprep.com/developer/docs#daily-chart-charts
+#  https://site.financialmodelingprep.com/developer/docs/pricing
+#  Only US stocks, 250 calls per day, 5 years data
 
 def fetch_prices(request):
+    # APIS IN STANDBY
+    # polygon, # 5 calls per minute, 2 years historical, Don't have Canadian markets but it's on the roadmap
+    # alpaca, # Contacted to see if they have CAD markets
+    # tiingo, # 50/hour, 500 symbols per month, 1000/day, 30 years historical, TSX stocks are in USD, asked if can get in CAD
+
+    today = datetime.today()
+    if today.weekday() >= 5:
+        return HttpResponse("Not a weekday, no need to insert today's prices")
+
     # APIS to try in order, until successful
-    # TODO 2 priority arrays, one for USD stocks and one for CAD stocks. Since CAD is often not supported with some APIs
     usd_apis = [
         alpha_vantage_rapidapi,  # 5/minute, 500/day, adjusted close works with free
+        #        financialmodelingprep,  # 250/day, US only, No provider setup yet, but account already made. Before alpha_vantage?
         mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         eodhd,  # 20/day, past year only, includes TSX
         marketstack,  # 100/month, markets all over the world, only 1 year data
@@ -71,7 +93,7 @@ def fetch_prices(request):
             if api_response["success"]:
                 Price.objects.bulk_create(api_response["prices"], ignore_conflicts=True)
                 response += f"{len(api_response['prices'])} rows inserted\n\n"
-                stock.date_last_fetch = datetime.today()
+                stock.date_last_fetch = today
                 stock.save()
                 break
             else:
@@ -88,8 +110,12 @@ def fetch_prices(request):
     return HttpResponse(response)
 
 
-# TODO Maybe tweak "lowest in X days" or make a new one to get alert when the stock price has been going back up 10% after the low
+# TODO Either tweak "cheapest in X days" to send a second alert once the stock price goes back up Y% after the low
+#  or make a new type of alert
+#  would be nice to be able to set the Y% value
+#  re-adjust the new low if it goes down further
 def send_alerts(request):
+    sent_alerts_count = 0
     for alert in Alert.objects.filter(enabled=True).all():
         last_price = Price.objects.filter(stock=alert.stock).order_by("-date").first()
         if not last_price:
@@ -100,17 +126,27 @@ def send_alerts(request):
         today = datetime.today()
         time_threshold = today - timedelta(days=(alert.days if alert.days else 0))
         subject = body = ""
+
+        # TODO TYPE_INTERVAL_CHEAPEST and TYPE_INTERVAL_HIGHEST have a lot of duplicate code, could be refactored
         match alert.type:
             case Alert.TYPE_INTERVAL_CHEAPEST:
-                if not Price.objects.filter(stock=alert.stock, close__lte=last_price, date__gte=time_threshold,
-                                            date__lt=today).exists():
-                    subject = f"{alert.stock.name} is the cheapest it has been in {alert.days} days"
-                    body = f"Price for {alert.stock.name} closed at {last_price}$ the cheapest in the past {alert.days} days"
+                price = (Price.objects.filter(stock=alert.stock, close__lte=last_price, date__lt=today)
+                         .order_by("-date").first())
+                if price is not None:
+                    days_diff = (today.date() - price.date).days
+                    if days_diff > alert.days:
+                        subject = f"{alert.stock.name} is the cheapest it has been in {days_diff} days"
+                        body = f"Price for {alert.stock.name} closed at {last_price}$ the cheapest in the past {days_diff} days"
+                        body += f" (Last time was on {price.date})"
             case Alert.TYPE_INTERVAL_HIGHEST:
-                if not Price.objects.filter(stock=alert.stock, close__gte=last_price, date__gt=time_threshold,
-                                            date__lt=today).exists():
-                    subject = f"{alert.stock.name} is the highest it has been in {alert.days} days"
-                    body = f"Price for {alert.stock.name} closed at {last_price}$ the highest in the past {alert.days} days"
+                price = (Price.objects.filter(stock=alert.stock, close__gte=last_price, date__lt=today)
+                         .order_by("-date").first())
+                if price is not None:
+                    days_diff = (today.date() - price.date).days
+                    if days_diff > alert.days:
+                        subject = f"{alert.stock.name} is the highest it has been in {days_diff} days"
+                        body = f"Price for {alert.stock.name} closed at {last_price}$ the highest in the past {days_diff} days"
+                        body += f" (Last time was on {price.date})"
             case Alert.TYPE_LOWER_THAN:
                 if last_price <= alert.value:
                     subject = f"{alert.stock.name} has reached less than {alert.value}$"
@@ -123,7 +159,10 @@ def send_alerts(request):
                 pass
 
         if subject and body:
-            body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{alert.stock.symbol}\">https://ca.finance.yahoo.com/quote/{alert.stock.symbol}</a>"
+            yahoo_symbol = alert.stock.yahoo_symbol if alert.stock.yahoo_symbol else alert.stock.symbol
+            seekingalpha_symbol = alert.stock.seekingalpha_symbol if alert.stock.seekingalpha_symbol else alert.stock.symbol
+            body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{alert.stock.symbol}\">https://ca.finance.yahoo.com/quote/{yahoo_symbol}</a>"
+            body += f"\n<a href=\"https://seekingalpha.com/symbol/{alert.stock.seekingalpha_symbol}\">https://seekingalpha.com/symbol/{seekingalpha_symbol}</a>"
             cprint(COLORS.BRIGHT_BLUE, subject)
             cprint(COLORS.BRIGHT_BLUE, body)
             send_email(
@@ -135,5 +174,147 @@ def send_alerts(request):
             if alert.disable_once_fired:
                 alert.enabled = False
                 alert.save()
+
+            sent_alerts_count += 1
+
+    return HttpResponse(f"Sent {sent_alerts_count} alerts")
+
+
+def compile_quant(request):
+    Log.d("TODO replace all prints with logging")
+    max_quant_types = int(request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN))
+
+    # Calculate the current date
+    current_date = datetime.now().date()
+    print(f"Current date: {current_date}")
+
+    # Get the date of the latest quant data from Seeking Alpha dumps
+    latest_quant_dump_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
+    print(f"Latest quant dump: {latest_quant_dump_date}")
+    if not latest_quant_dump_date:
+        return HttpResponse("No quant data found")
+
+    # Get quant types that have not been compiled yet (compilation date smaller than quant date)
+    types_to_update = []
+    for quant_type in Quant.TYPES.keys():
+        # Exclude this quant type if it already has a compilation date greater than the latest date
+        if CompiledQuant.objects.filter(compilation_date__gte=latest_quant_dump_date, type=quant_type).exists():
+            print(f"Quant type already compiled: {quant_type}")
+            continue
+
+        # Don't fetch more types to compile than the max requested
+        if len(types_to_update) >= max_quant_types:
+            break
+        types_to_update.append(quant_type)
+
+    # For each quant type, get ALL the quant rows and compile the score
+    for current_type in types_to_update:
+        # Get all quant rows for the current type, and calculate the score in the query directly
+        compiled_type = (
+            Quant.objects
+            .values("seekingalpha_symbol", "type")
+            .filter(type=current_type)
+            # .annotate(diff=diff)
+            .annotate(count=Count("seekingalpha_symbol"), score=Sum(101 - F('rank')))
+            .order_by("-score").all()
+        )
+        print(f"Compiled type: {Quant.TYPES[current_type]} ({compiled_type.count()} stock symbols)")
+
+        # Convert the query results to a list of CompiledQuant objects for model insert
+        compiled_type_instances = [CompiledQuant(**entry) for entry in compiled_type]
+
+        # Update the Compiled Quant table (New stock symbols will be added, existing symbols will be updated)
+        CompiledQuant.objects.bulk_create(
+            compiled_type_instances,
+            update_conflicts=True,
+            update_fields=["count", "score"],  # compilation_date is auto-updated
+            unique_fields=["seekingalpha_symbol", "type"],  # Fields to match existing rows that need to updating
+        )
+
+    return HttpResponse(f"Compiled {len(types_to_update)} quant types")
+
+
+# TODO: NOT IMPLEMENTED YET, NO IDEA WHAT THIS DOES AT THE MOMENT, BUT IT CRASHES FOR SURE
+def compile_quant_decay(request):
+    max_quant_types = request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN)
+
+    # Calculate the current date and define the decay factor for each month
+    current_date = datetime.now().date()
+    print(current_date)
+
+    # Calculate the difference in months
+    # diff_in_months = ExpressionWrapper(
+    #     expression=Func(F('date'), Value(current_date), function='AGE'),
+    #     output_field=IntegerField()
+    # )
+    diff_in_months = ExpressionWrapper(
+        F('date') - Value(current_date),
+        output_field=DurationField()
+    )
+
+    # Calculate the number of months as an integer
+    # num_months = Func(diff_in_months, Value(0), function='EXTRACT')
+
+    latest_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
+    pprint(latest_date)
+
+    types_to_update = []
+    for quant_type in Quant.TYPES.keys():
+        if CompiledQuant.objects.filter(date__gt=latest_date, type=quant_type).exists():
+            continue
+        if len(types_to_update) >= max_quant_types:
+            break
+        types_to_update.append(quant_type)
+    # pprint(types_to_update)
+
+    # score_expression = 101 - F('rank') * (1 - (diff_in_months * DECAY_FACTOR))
+    # score_expression = 101 - F('rank') * (1 - (num_months * DECAY_FACTOR))
+    fuck_test = ExpressionWrapper(datetime.now().date() - F('date'), output_field=fields.DurationField)
+    score_expression2 = 101 - F('rank') * (1 - (fuck_test * DECAY_FACTOR))
+    score_expression = Sum(101 - F('rank'))
+    diff = ExpressionWrapper(
+        datetime.now().date() - F('date'),
+        output_field=fields.DurationField()
+    )
+    for current_type in types_to_update:
+        # try:
+        compiled_type = (
+            Quant.objects
+            .values("seekingalpha_symbol", "type")
+            .filter(type=current_type)
+            # .annotate(diff=diff)
+            # .annotate(count=Count("seekingalpha_symbol"), score=score_expression)
+            # .annotate(count=Count("seekingalpha_symbol"), score=score_expression, diff_in_months=ExtractMonth('diff'))
+            .annotate(count=Count("seekingalpha_symbol"), score=score_expression)
+            .annotate(days_difference_delta=datetime.now().date() - F('date'))  # This returns a TimeDelta
+            # .annotate(days_difference_delta=datetime.now().date() - F('date'))
+            # .annotate(gg=ExpressionWrapper((datetime.now().date() - F('date')) * 100))
+            # .annotate(gg=ExpressionWrapper((datetime.now().date() - F('date')) - F('rank'), output_field=DecimalField))
+            # .annotate(fuck_test=score_expression2)
+            .annotate(days_difference_delta_multiplied=ExpressionWrapper((datetime.now().date() - F('date')) * 123))
+            # .annotate(days_difference_delta_multiplied=(datetime.now().date() - F('date'))*123)
+            # .annotate(
+            #     days_difference=Cast(
+            #         Cast('JulianDay', datetime.now().date()) - Cast('JulianDay', F('date')), output_field=IntegerField())
+            #         )
+            .order_by("-score").all()
+        )
+        # except Exception as e:
+        #     cprint(color=COLORS.RED, message=e.message)
+        #     exit(0)
+        try:
+            print(compiled_type.count())
+            pprint(compiled_type)
+        except Exception as e:
+            cprint(color=COLORS.RED, message=e.message)
+            exit(0)
+        #
+        # compiled_type_instances = [CompiledQuant(**entry) for entry in compiled_type]
+        # CompiledQuant.objects.bulk_create(
+        #     compiled_type_instances,
+        #     update_conflicts=True,
+        #     update_fields=["count", "score"],
+        #     unique_fields=["seekingalpha_symbol", "type"],
+        # )
 
     return HttpResponse("yo")

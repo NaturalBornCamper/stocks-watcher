@@ -4,7 +4,7 @@ import requests
 from requests import Response
 
 from watcher.models import Stock, Price
-from watcher.utils import getenv
+from watcher.utils.helpers import getenv
 
 # https://rapidapi.com/sparior/api/mboum-finance
 
@@ -12,6 +12,9 @@ API_NAME = "Mboum Finance"
 BASE_URL = "https://mboum-finance.p.rapidapi.com/hi/history"
 
 
+# TODO MBOUM changed "items" to "body", then the date format changed.. my whole system stopped working because of exception.
+#  So make everything safe, with try/except and test if the API crashes or gives weird json, or json changes again
+#   I already did most actually, just make sure other things don't crash, like when reading the date format
 def fetch(stock: Stock, get_full_price_history: bool) -> dict:
     symbol = stock.symbol
     if symbol:

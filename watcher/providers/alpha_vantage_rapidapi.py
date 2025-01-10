@@ -2,7 +2,7 @@ import requests
 from requests import Response
 
 from watcher.models import Stock, Price
-from watcher.utils import getenv
+from watcher.utils.helpers import getenv
 
 # https://rapidapi.com/alphavantage/api/alpha-vantage
 

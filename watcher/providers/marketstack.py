@@ -4,7 +4,7 @@ import requests
 from requests import Response
 
 from watcher.models import Stock, Price
-from watcher.utils import getenv
+from watcher.utils.helpers import getenv
 
 # Usage https://marketstack.com/usage
 # https://marketstack.com/documentation
