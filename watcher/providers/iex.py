@@ -2,76 +2,79 @@ import requests
 from requests import Response
 
 from watcher.models import Stock, Price
+from watcher.providers.base_provider import AbstractBaseProvider
 from watcher.utils.helpers import getenv
+
 
 # NOTE to see usage left for stocks API: https://iexcloud.io/console/usage
 # https://iexcloud.io/docs/core/HISTORICAL_PRICES
 
-API_NAME = "IEX Cloud"
-BASE_URL = "https://api.iex.cloud/v1/data/core/historical_prices"
+class IEX(AbstractBaseProvider):
+    API_NAME = "IEX Cloud"
+    BASE_URL = "https://api.iex.cloud/v1/data/core/historical_prices"
 
+    @staticmethod
+    def fetch(stock: Stock, get_full_price_history: bool) -> dict:
+        symbol = stock.symbol
+        if symbol:
+            api_request = requests.get(
+                f"{IEX.BASE_URL}/{stock.symbol}",
+                params={
+                    'range': '10y' if get_full_price_history else '1w',
+                    'token': getenv("IEX_API_KEY"),
+                },
+            )
+            api_result = {
+                "url": api_request.request.url,
+                "status_code": api_request.status_code,
+                "prices": [],
+            }
+        else:
+            return {
+                "url": "empty",
+                "status_code": 0,
+                "prices": [],
+                "success": False,
+                "message": f"No symbol provided for {stock.name}"
+            }
 
-def fetch(stock: Stock, get_full_price_history: bool) -> dict:
-    symbol = stock.symbol
-    if symbol:
-        api_request = requests.get(
-            f"{BASE_URL}/{stock.symbol}",
-            params={
-                'range': '10y' if get_full_price_history else '1w',
-                'token': getenv("IEX_API_KEY"),
-            },
-        )
-        api_result = {
-            "url": api_request.request.url,
-            "status_code": api_request.status_code,
-            "prices": [],
-        }
-    else:
-        return {
-            "url": "empty",
-            "status_code": 0,
-            "prices": [],
-            "success": False,
-            "message": f"No symbol provided for {stock.name}"
-        }
+        try:
+            json = api_request.json()
+        except requests.exceptions.JSONDecodeError:
+            api_result["success"] = False
+            api_result["message"] = api_request.text
+            return api_result
 
-    try:
-        json = api_request.json()
-    except requests.exceptions.JSONDecodeError:
-        api_result["success"] = False
-        api_result["message"] = api_request.text
+        if type(json) is list:
+            for details in json:
+                api_result["prices"].append(
+                    Price(
+                        stock=stock,
+                        date=details["priceDate"],
+                        low=details["low"],
+                        high=details["high"],
+                        open=details["open"],
+                        close=details["close"],
+                        volume=details["volume"],
+                    )
+                )
+            api_result["success"] = True
+        else:
+            api_result["success"] = False
+            api_result["message"] = IEX.get_json_error(api_request, json, True)
+
         return api_result
 
-    if type(json) is list:
-        for details in json:
-            api_result["prices"].append(
-                Price(
-                    stock=stock,
-                    date=details["priceDate"],
-                    low=details["low"],
-                    high=details["high"],
-                    open=details["open"],
-                    close=details["close"],
-                    volume=details["volume"],
-                )
-            )
-        api_result["success"] = True
-    else:
-        api_result["success"] = False
-        api_result["message"] = get_json_error(api_request, json, True)
-
-    return api_result
-
-
-def get_json_error(api_request: Response, json: dict, incorrect_json_format: bool = False) -> str:
-    if error_message := json.get("Error Message"):
-        return error_message
-    elif error_message := json.get("Note"):
-        return error_message
-    elif incorrect_json_format:
-        return f"Received json data is not a list as expected json: {api_request.text}"
-    else:
-        return api_request.text
+    @staticmethod
+    def get_json_error(api_request: Response, json: dict, incorrect_json_format: bool = False) -> str:
+        if error_message := json.get("Error Message"):
+            return error_message
+        elif error_message := json.get("Note"):
+            return error_message
+        elif incorrect_json_format:
+            return f"Received json data is not a list as expected json: {api_request.text}"
+        else:
+            return api_request.text
 
 # AMZN stock split example IEX
 # https://api.iex.cloud/v1/data/core/historical_prices/amzn?range=14m&token=XX

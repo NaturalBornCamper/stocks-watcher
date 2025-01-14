@@ -2,81 +2,86 @@ import requests
 from requests import Response
 
 from watcher.models import Stock, Price
+from watcher.providers.base_provider import AbstractBaseProvider
 from watcher.utils.helpers import getenv
+
 
 # https://www.alphavantage.co/documentation/
 
-API_NAME = "Alpha Vantage"
-BASE_URL = "https://www.alphavantage.co/query"
 
+class AlphaVantage(AbstractBaseProvider):
+    API_NAME = "Alpha Vantage"
+    BASE_URL = "https://www.alphavantage.co/query"
+    CAD_SUFFIX = ".TO"
 
-def fetch(stock: Stock, get_full_price_history: bool) -> dict:
-    symbol = stock.symbol
-    if symbol:
-        api_request = requests.get(
-            BASE_URL,
-            params={
-                'function': 'TIME_SERIES_DAILY',
-                # 'function': 'TIME_SERIES_DAILY_ADJUSTED',  # They finally woke up and made it premium properly
-                'symbol': stock.symbol,
-                'outputsize': 'full' if get_full_price_history else 'compact',
-                'datatype': 'json',
-                'apikey': getenv("ALPHAVANTAGE_API_KEY"),
-            },
-        )
-        api_result = {
-            "url": api_request.request.url,
-            "status_code": api_request.status_code,
-            "prices": [],
-        }
-    else:
-        return {
-            "url": "empty",
-            "status_code": 0,
-            "prices": [],
-            "success": False,
-            "message": f"No symbol provided for {stock.name}"
-        }
+    @staticmethod
+    def fetch(stock: Stock, get_full_price_history: bool) -> dict:
+        symbol = stock.symbol
+        if symbol:
+            api_request = requests.get(
+                AlphaVantage.BASE_URL,
+                params={
+                    'function': 'TIME_SERIES_DAILY',
+                    # 'function': 'TIME_SERIES_DAILY_ADJUSTED',  # They finally woke up and made it premium properly
+                    'symbol': stock.symbol,
+                    'outputsize': 'full' if get_full_price_history else 'compact',
+                    'datatype': 'json',
+                    'apikey': getenv("ALPHAVANTAGE_API_KEY"),
+                },
+            )
+            api_result = {
+                "url": api_request.request.url,
+                "status_code": api_request.status_code,
+                "prices": [],
+            }
+        else:
+            return {
+                "url": "empty",
+                "status_code": 0,
+                "prices": [],
+                "success": False,
+                "message": f"No symbol provided for {stock.name}"
+            }
 
-    try:
-        json = api_request.json()
-    except requests.exceptions.JSONDecodeError:
-        api_result["success"] = False
-        api_result["message"] = api_request.text
+        try:
+            json = api_request.json()
+        except requests.exceptions.JSONDecodeError:
+            api_result["success"] = False
+            api_result["message"] = api_request.text
+            return api_result
+
+        if "Time Series (Daily)" in json:
+            for date, details in json["Time Series (Daily)"].items():
+                api_result["prices"].append(
+                    Price(
+                        stock=stock,
+                        date=date,
+                        low=details["3. low"],
+                        high=details["2. high"],
+                        open=details["1. open"],
+                        close=details["5. adjusted close"],
+                        volume=details["6. volume"],
+                    )
+                )
+            api_result["success"] = True
+        else:
+            api_result["success"] = False
+            api_result["message"] = AlphaVantage.get_json_error(api_request, json, "Time Series (Daily)")
+
         return api_result
 
-    if "Time Series (Daily)" in json:
-        for date, details in json["Time Series (Daily)"].items():
-            api_result["prices"].append(
-                Price(
-                    stock=stock,
-                    date=date,
-                    low=details["3. low"],
-                    high=details["2. high"],
-                    open=details["1. open"],
-                    close=details["5. adjusted close"],
-                    volume=details["6. volume"],
-                )
-            )
-        api_result["success"] = True
-    else:
-        api_result["success"] = False
-        api_result["message"] = get_json_error(api_request, json, "Time Series (Daily)")
-
-    return api_result
-
-
-def get_json_error(api_request: Response, json: dict, missing_parameter: str = "") -> str:
-    if error_message := json.get("Error Message"):
-        return error_message
-    elif error_message := json.get("Information"):
-        return error_message
-    elif error_message := json.get("Note"):
-        return error_message
-    elif missing_parameter:
-        return f"\"{missing_parameter}\" not found in json: {api_request.text}"
-    else:
-        return api_request.text
+    @staticmethod
+    def get_json_error(api_request: Response, json: dict, missing_parameter: str = "") -> str:
+        if error_message := json.get("Error Message"):
+            return error_message
+        elif error_message := json.get("Information"):
+            return error_message
+        elif error_message := json.get("Note"):
+            return error_message
+        elif missing_parameter:
+            return f"\"{missing_parameter}\" not found in json: {api_request.text}"
+        else:
+            return api_request.text
 
 # AMZN stock split example AlphaVantage
 # https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=amzn&outputsize=full&apikey=XX

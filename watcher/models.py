@@ -1,15 +1,13 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 
+from watcher.constants import CURRENCY_USD, CURRENCY_CAD
 from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
 
 
-# TODO Stock Category (optional)? Then I need a category editor? Might be uselful of others want to use it
-# TODO Find a way to update dividend yield automatically?
+# TODO Stock Category (optional)? Then I need a category editor? Might be uselful if others want to use it
+# TODO Find a way to update dividend yield automatically, since it can change from time to time?
 class Stock(models.Model):
-    CURRENCY_USD = "USD"
-    CURRENCY_CAD = "CAD"
-
     CURRENCIES = [
         (CURRENCY_USD, "USD"),
         (CURRENCY_CAD, "CAD"),
@@ -19,12 +17,7 @@ class Stock(models.Model):
     currency = models.CharField(max_length=255, choices=CURRENCIES, default=CURRENCY_USD)
     market = models.CharField(max_length=10, default="NASDAQ")
     symbol = models.CharField(max_length=10)
-    google_symbol = models.CharField(max_length=10, blank=True, null=True, verbose_name="Google symbol (if different)")
-    yahoo_symbol = models.CharField(max_length=10, blank=True, null=True, verbose_name="Yahoo symbol (if different)")
-    seekingalpha_symbol = models.CharField(max_length=10, blank=True, null=True,
-                                           verbose_name="Seeking Alpha symbol (if different)")
-    marketstack_symbol = models.CharField(max_length=10, blank=True, null=True,
-                                          verbose_name="Marketstack API symbol (if different)")
+    notes = models.TextField(blank=True)
     date_last_fetch = models.DateField(blank=True, null=True, verbose_name="Last API call date (leave empty)")
     dividend_yield = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=False, default=0)
 
@@ -32,14 +25,10 @@ class Stock(models.Model):
     def save(self, *args, **kwargs):
         self.symbol = self.symbol and self.symbol.upper()
         self.market = self.market and self.market.upper()
-        self.google_symbol = self.google_symbol and self.google_symbol.upper()
-        self.yahoo_symbol = self.yahoo_symbol and self.yahoo_symbol.upper()
-        self.seekingalpha_symbol = self.seekingalpha_symbol and self.seekingalpha_symbol.upper()
-        self.marketstack_symbol = self.marketstack_symbol and self.marketstack_symbol.upper()
         super(Stock, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.market}: {self.symbol}) - {self.get_currency_display()} - ({self.price.count()} prices - {self.alert.count()} alerts) - {self.dividend_yield}% dividend"
+        return f"{self.name} ({self.market}: {self.symbol}) - {self.get_currency_display()} - ({self.price.count()} prices, {self.alert.count()} alerts) - {self.dividend_yield}% dividend"
 
     class Meta:
         ordering = ["name"]
@@ -86,6 +75,7 @@ class Alert(models.Model):
 
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True, related_name="alert")
     name = models.CharField(max_length=255, blank=True, verbose_name="Optional Name")
+    notes = models.TextField(blank=True)
     type = models.PositiveSmallIntegerField(choices=TYPES, blank=False)
     days = models.PositiveSmallIntegerField(blank=True, null=True,
                                             verbose_name="Minimum number of days for interval alerts")
@@ -104,7 +94,12 @@ class Alert(models.Model):
         ordering = ["stock", "type"]
 
 
-# TODO Add company name to model, then import it in import_quant
+class QuantStock(models.Model):
+    stock = models.ForeignKey(Stock, on_delete=models.SET_NULL, db_index=True, blank=True, null=True)
+    symbol = models.CharField(max_length=10, db_index=True, unique=True)
+    name = models.CharField(max_length=255)
+
+
 class Quant(models.Model):
     TYPE_TOP_RATED_OVERALL = "top_rated_overall"
     TYPE_QUANT = "top_quant"
@@ -138,10 +133,10 @@ class Quant(models.Model):
         TYPE_FINANCIAL: "Financial",
     }
 
+    quant_stock = models.ForeignKey(QuantStock, on_delete=models.CASCADE, db_index=True)
     date = models.DateField(blank=True, null=True, verbose_name="Year and month this data is from")
     type = models.CharField(max_length=255, choices=TYPES)
     rank = models.PositiveSmallIntegerField()
-    seekingalpha_symbol = models.CharField(max_length=10)
     quant = models.DecimalField(max_digits=3, decimal_places=2)
     rating_seeking_alpha = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
     rating_wall_street = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
@@ -155,10 +150,7 @@ class Quant(models.Model):
 
     class Meta:
         constraints = [
-            UniqueConstraint(
-                name="unique_quant_date_type_symbol",
-                fields=["date", "type", "seekingalpha_symbol"]
-            ),
+            UniqueConstraint(name="pk_date_type_stock", fields=["date", "type", "quant_stock"]),
         ]
 
     @staticmethod
@@ -179,13 +171,13 @@ class Quant(models.Model):
 
 
 class CompiledQuant(models.Model):
-    seekingalpha_symbol = models.CharField(max_length=10, blank=False)
+    quant_stock = models.ForeignKey(QuantStock, on_delete=models.CASCADE, db_index=True)
     type = models.CharField(max_length=255, choices=Quant.TYPES, blank=False)
     score = models.PositiveSmallIntegerField(default=0)
     count = models.PositiveSmallIntegerField(default=0)
-    compilation_date = models.DateField(auto_now=True, verbose_name="Date this row was compiled")
+    latest_quant_date = models.DateField(verbose_name="Date of the latest quant dump used for compilation")
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['seekingalpha_symbol', 'type'], name='pk_compiledquant')
+            UniqueConstraint(fields=['quant_stock', 'type'], name='pk_stock_type')
         ]

@@ -1,16 +1,5 @@
 
 STEPS ASAP:
--Cleanup
- //Comment better what's happening in compile_quant
- Link in email doesn't use Yahoo symbol if there's one (uses regular symbol. AC instead of AC.TO, which sends to wrong stock)
- Set a prefix and suffix for each API for when fetching stocks. For example CA_SUFFIX=".XSTE" or CA_SUFFIX=".TO" but I think there is always just a suffix
- Also set application settings for yahoo_ca_suffix, google_ca_prefix, seeking_alpha_ca_prefix so that when the email has a link to the stock on Yahoo, etc. it adds the prefix/suffix
- Finish up Quant cronjob so I can update the server's LOWER_THAN cronjob
- ^Commit after that^ too much unfinished code
--Finish compiled quant cronjob
--Each provider:
- CAD_PREFIX = ''
- CAD_SUFFIX = ''
 -Alerts
  Make a model for "less than x days" and "more than x days" alerts
  AND a model for "target prices", so they are not all mixed up

@@ -4,8 +4,7 @@ import os
 import sys
 
 
-# TODO Find a way to not update stock last fetch date if updated before 5pm (closing price not available yet). Change field to datetime and look if less than 5pm instead?
-# TODO Add watches in portfolio to quickly see the changes in one place (Compare every end of day with previous day and trigger if X% change or more)
+# TODO Add watches/alerts to get notified if price changed of +/-5%, 10%, etc. Then add my entire portfolio on the app
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "watcher.settings.dev")

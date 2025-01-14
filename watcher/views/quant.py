@@ -31,10 +31,14 @@ for slug, name in Quant.TYPES.items():
 def score_or_count(request, value_to_display="score"):
     quant_list = {}
     for compiled_quant_stock_type in CompiledQuant.objects.all():
-        if compiled_quant_stock_type.seekingalpha_symbol not in quant_list:
-            quant_list[compiled_quant_stock_type.seekingalpha_symbol] = copy.deepcopy(DEFAULT_STOCK_DICT)
+        if compiled_quant_stock_type.quant_stock.symbol not in quant_list:
+            quant_list[compiled_quant_stock_type.quant_stock.symbol] = {
+                "name": compiled_quant_stock_type.quant_stock.name,
+                "types": copy.deepcopy(DEFAULT_STOCK_DICT)
+            }
 
-        quant_list[compiled_quant_stock_type.seekingalpha_symbol][compiled_quant_stock_type.type] = {
+        quant_list[compiled_quant_stock_type.quant_stock.symbol]["types"][compiled_quant_stock_type.type] = {
+            # "company": compiled_quant_stock_type.score,
             "score": compiled_quant_stock_type.score,
             "count": compiled_quant_stock_type.count,
         }

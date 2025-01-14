@@ -2,9 +2,10 @@ from django.core.management.base import BaseCommand
 
 from django.core.management.base import BaseCommand
 
-from watcher.models import CompiledQuant
+from watcher.models import CompiledQuant, Quant
 
 
+# Usage: python manage.py db_operations empty_quant
 # Usage: python manage.py db_operations empty_compiled_quant
 
 
@@ -17,5 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         operation = options['operation']
 
-        if operation == 'empty_compiled_quant':
+        if operation == 'empty_quant':
+            Quant.objects.all().delete()
+        elif operation == 'empty_compiled_quant':
             CompiledQuant.objects.all().delete()

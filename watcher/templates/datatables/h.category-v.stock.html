@@ -1,9 +1,9 @@
 {% load quant_filters %}
 <table cellpadding="2" border="1" class="sortable">
     <tr>
-        <th>Stock</th>
-        <th>Seeking Alpha</th>
-        <th>Yahoo Finance</th>
+        <th>Symbol</th>
+        <th>Links</th>
+        <th>Company</th>
         {% get_types as types %}
         {% for type in types.values %}
             <th>{{ type }}</th>
@@ -15,12 +15,13 @@
                 {{ symbol }}
             </td>
             <td>
-                <a href="https://seekingalpha.com/symbol/{{ symbol }}">OPEN</a>
+                <a href="https://ca.finance.yahoo.com/quote/{{ symbol }}" target="Ya_{{ symbol }}">Ya</a>
+                <a href="https://seekingalpha.com/symbol/{{ symbol }}" target="SA_{{ symbol }}">SA</a>
             </td>
             <td>
-                <a href="https://ca.finance.yahoo.com/quote/{{ symbol }}">OPEN</a>
+                {{ stock.name }}
             </td>
-            {% for type in stock.values %}
+            {% for type in stock.types.values %}
                 {% if value_to_display == "score" %}
                     <td data-sort="{{ type.score }}" title="Count: {{ type.count }}">{{ type.score }} ({{ type.count }})</td>
                 {% elif value_to_display == "count" %}

@@ -9,8 +9,13 @@ from django.http import HttpResponse
 from pyrotools.console import cprint, COLORS
 from pyrotools.log import Log
 
-from watcher.models import Stock, Price, Alert, Quant, CompiledQuant
-from watcher.providers import alpha_vantage, mboum, marketstack, eodhd, alpha_vantage_rapidapi
+from watcher.constants import CURRENCY_USD, YAHOO_CAD_SUFFIX, CURRENCY_CAD, SEEKING_ALPHA_CAD_PREFIX
+from watcher.models import Stock, Price, Alert, Quant, CompiledQuant, QuantStock
+from watcher.providers.alpha_vantage import AlphaVantage
+from watcher.providers.alpha_vantage_rapidapi import AlphaVantageRapidAPI
+from watcher.providers.eodhd import EODHD
+from watcher.providers.marketstack import MarketStack
+from watcher.providers.mboum import Mboum
 from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
 from watcher.utils.helpers import getenv
 
@@ -30,15 +35,8 @@ def send_email(to: str, subject: str, body: str):
     )
 
 
-# TODO Kind of important and messy: For Canadian stocks, Either:
-#  -I write the official symbol=AC then yahoo_symbol=AC.TO, but APIs will get "Associated Capital Group" instead.
-#  -I write symbol=AC.TO and yahoo_symbol=AC.TO, then APIs will get the correct stock but yahoo_symbol is useless.
-#  Maybe get rid of all the extra symbols and in the app settings, have yahoo_suffix=.TO google_suffix=:TSE, seeking_alpha_prefix=CA:
-#   But then either:
-#   -I write symbol=AC and I have the same problem with the API
-#   -I write symbol=AC.TO, and it will become AC.TO:TSE once Google suffix is applied
-#   -I apply the yahoo suffix every time for APIs
-#   -I write symbol=AC and each API has a prefix/suffix for CAD stocks
+# TODO Find a way to not update stock last fetch date if updated before 5pm (closing price not available yet). Change field to datetime and look if less than 5pm instead?
+#  This way if I call the cronjob before 5pm, it won't mark the current day as fetched?
 # TODO Add API financialmodelingprep
 #  https://financialmodelingprep.com/api/v3/historical-price-full/AAPL?apikey=d6IlFcraIFtrd0IDklzrPE9wf1T3X3b7
 #  https://site.financialmodelingprep.com/developer/docs#daily-chart-charts
@@ -57,26 +55,25 @@ def fetch_prices(request):
 
     # APIS to try in order, until successful
     usd_apis = [
-        alpha_vantage_rapidapi,  # 5/minute, 500/day, adjusted close works with free
+        AlphaVantageRapidAPI,  # 5/minute, 500/day, adjusted close works with free
         #        financialmodelingprep,  # 250/day, US only, No provider setup yet, but account already made. Before alpha_vantage?
-        mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
-        eodhd,  # 20/day, past year only, includes TSX
-        marketstack,  # 100/month, markets all over the world, only 1 year data
-        # iex,  # 7 days trial, expired
-        # twelve_data, # RapidAPI, 800/day, 8 requests per minute, TSX only available on paid plan
+        Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
+        EODHD,  # 20/day, past year only, includes TSX
+        MarketStack,  # 100/month, markets all over the world, only 1 year data
+        # IEX,  # 7 days trial, expired
+        # twelve_data, # RapidAPI, 800/day, 8 requests per minute, Canada only available on paid plan
         # finnhub, # 60/minute, worldwide stocks only paid
-        # stockdata.org, # 100 per day, Can get TSX stocks details but no history
+        # stockdata.org, # 100 per day, Can get Canada stocks details but no history
         # financialmodelingprep, # 250/day, US only
-        # marketdata, 100/day, 1 year data, no TSX, strange format
-        # eodhistoricaldata, # 20/day, past year only, includes TSX
-        # alpha_vantage,  # 5/minute, 500/day, "adjusted close" for premium
+        # marketdata, 100/day, 1 year data, no Canada, strange format
+        # AlphaVantage,  # 5/minute, 500/day, "adjusted close" for premium
     ]
 
     cad_apis = [
-        mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
-        alpha_vantage,  # 5/minute, 500/day, adjusted close seems for premium
-        eodhd,  # 20/day, past year only, includes TSX
-        marketstack,  # 100/month, markets all over the world, only 1 year data
+        Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
+        AlphaVantage,  # 5/minute, 500/day, adjusted close seems for premium
+        EODHD,  # 20/day, past year only, includes Canada
+        MarketStack,  # 100/month, markets all over the world, only 1 year data
     ]
     # TSX API: https://site.financialmodelingprep.com/developer/docs/tsx-prices-api/ (Didn't search correclty, first one I found, maybe better options)
 
@@ -87,7 +84,7 @@ def fetch_prices(request):
         get_full_price_history = stock.date_last_fetch is None
 
         response += f"******Fetching \"{stock.name}\" prices, last fetch: {stock.date_last_fetch}******\n"
-        for api in (usd_apis if stock.currency == Stock.CURRENCY_USD else cad_apis):
+        for api in (usd_apis if stock.currency == CURRENCY_USD else cad_apis):
             response += f"Using {api.API_NAME}\n"
             api_response = api.fetch(stock, get_full_price_history)
             if api_response["success"]:
@@ -159,10 +156,10 @@ def send_alerts(request):
                 pass
 
         if subject and body:
-            yahoo_symbol = alert.stock.yahoo_symbol if alert.stock.yahoo_symbol else alert.stock.symbol
-            seekingalpha_symbol = alert.stock.seekingalpha_symbol if alert.stock.seekingalpha_symbol else alert.stock.symbol
-            body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{alert.stock.symbol}\">https://ca.finance.yahoo.com/quote/{yahoo_symbol}</a>"
-            body += f"\n<a href=\"https://seekingalpha.com/symbol/{alert.stock.seekingalpha_symbol}\">https://seekingalpha.com/symbol/{seekingalpha_symbol}</a>"
+            yahoo_symbol = f"{alert.stock.symbol}{YAHOO_CAD_SUFFIX if alert.stock.currency == CURRENCY_CAD else ""}"
+            sa_symbol = f"{alert.stock.symbol}{SEEKING_ALPHA_CAD_PREFIX if alert.stock.currency == CURRENCY_CAD else ""}"
+            body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{yahoo_symbol}\">https://ca.finance.yahoo.com/quote/{yahoo_symbol}</a>"
+            body += f"\n<a href=\"https://seekingalpha.com/symbol/{sa_symbol}\">https://seekingalpha.com/symbol/{sa_symbol}</a>"
             cprint(COLORS.BRIGHT_BLUE, subject)
             cprint(COLORS.BRIGHT_BLUE, body)
             send_email(
@@ -184,10 +181,6 @@ def compile_quant(request):
     Log.d("TODO replace all prints with logging")
     max_quant_types = int(request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN))
 
-    # Calculate the current date
-    current_date = datetime.now().date()
-    print(f"Current date: {current_date}")
-
     # Get the date of the latest quant data from Seeking Alpha dumps
     latest_quant_dump_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
     print(f"Latest quant dump: {latest_quant_dump_date}")
@@ -198,7 +191,7 @@ def compile_quant(request):
     types_to_update = []
     for quant_type in Quant.TYPES.keys():
         # Exclude this quant type if it already has a compilation date greater than the latest date
-        if CompiledQuant.objects.filter(compilation_date__gte=latest_quant_dump_date, type=quant_type).exists():
+        if CompiledQuant.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
             print(f"Quant type already compiled: {quant_type}")
             continue
 
@@ -209,27 +202,32 @@ def compile_quant(request):
 
     # For each quant type, get ALL the quant rows and compile the score
     for current_type in types_to_update:
-        # Get all quant rows for the current type, and calculate the score in the query directly
         compiled_type = (
             Quant.objects
-            .values("seekingalpha_symbol", "type")
             .filter(type=current_type)
-            # .annotate(diff=diff)
-            .annotate(count=Count("seekingalpha_symbol"), score=Sum(101 - F('rank')))
-            .order_by("-score").all()
+            .values("quant_stock", "type")  # Grouping fields
+            .annotate(count=Count("pk"), score=Sum(101 - F('rank')))
         )
-        print(f"Compiled type: {Quant.TYPES[current_type]} ({compiled_type.count()} stock symbols)")
 
         # Convert the query results to a list of CompiledQuant objects for model insert
-        compiled_type_instances = [CompiledQuant(**entry) for entry in compiled_type]
+        compiled_type_instances = []
+        for entry in compiled_type:
+            compiled_type_instances.append(CompiledQuant(
+                quant_stock=QuantStock.objects.get(pk=entry["quant_stock"]),
+                type=entry["type"],
+                score=entry["score"],
+                count=entry["count"],
+                latest_quant_date=latest_quant_dump_date
+            ))
 
         # Update the Compiled Quant table (New stock symbols will be added, existing symbols will be updated)
         CompiledQuant.objects.bulk_create(
             compiled_type_instances,
             update_conflicts=True,
-            update_fields=["count", "score"],  # compilation_date is auto-updated
-            unique_fields=["seekingalpha_symbol", "type"],  # Fields to match existing rows that need to updating
+            update_fields=["count", "score", "latest_quant_date"],
+            unique_fields=["quant_stock", "type"],  # Fields to match existing rows that need to updating
         )
+        print(f"Compiled type: {Quant.TYPES[current_type]} ({compiled_type.count()} stock symbols)")
 
     return HttpResponse(f"Compiled {len(types_to_update)} quant types")
 

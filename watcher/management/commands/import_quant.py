@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from watcher.models import Quant
+from watcher.models import Quant, QuantStock
 
 # Usage: python manage.py import_quant quant.csv
 
@@ -24,8 +24,10 @@ BULK_INSERTION = True
 
 
 # python manage.py import_quant /path/to/your/csv_file.csv
-# python manage.py import_quant 2024-01_quant.csv
-def convert_market_cap(string_value: str, symbol: str) -> float | None:
+# python manage.py import_quant "Quant Dumps/2024-01_quant.csv"
+
+# Converts values like 1.2B to 1200M
+def convert_market_cap_to_millions(string_value: str, symbol: str) -> float | None:
     if not string_value:
         return None
 
@@ -66,6 +68,7 @@ class Command(BaseCommand):
     TYPE = 1
     RANK = 2
     SEEKINGALPHA_SYMBOL = 3
+    COMPANY_NAME = 4
     QUANT = 5
     RATING_SEEKING_ALPHA = 6
     RATING_WALL_STREET = 7
@@ -97,15 +100,19 @@ class Command(BaseCommand):
                     quant = Quant()
 
                     # If no date in column, use current date
+                    quant.quant_stock, created = QuantStock.objects.get_or_create(
+                        symbol=row[self.SEEKINGALPHA_SYMBOL],
+                        defaults={"name": row[self.COMPANY_NAME]}
+                    )
                     quant.date = row[self.DATE] if row[self.DATE] else datetime.today()
                     quant.type = row[self.TYPE]
                     quant.rank = row[self.RANK]
-                    quant.seekingalpha_symbol = row[self.SEEKINGALPHA_SYMBOL]
                     quant.quant = clean(row[self.QUANT])
                     quant.rating_seeking_alpha = clean(row[self.RATING_SEEKING_ALPHA])
                     quant.rating_wall_street = clean(row[self.RATING_WALL_STREET])
-                    quant.market_cap_millions = convert_market_cap(row[self.MARKET_CAP_MILLIONS],
-                                                                   row[self.SEEKINGALPHA_SYMBOL])
+                    quant.market_cap_millions = convert_market_cap_to_millions(
+                        row[self.MARKET_CAP_MILLIONS], row[self.SEEKINGALPHA_SYMBOL]
+                    )
                     quant.dividend_yield = clean(row[self.DIVIDEND_YIELD])
                     quant.valuation = row[self.VALUATION]
                     quant.profitability = row[self.PROFITABILITY]
@@ -123,7 +130,7 @@ class Command(BaseCommand):
                             print(quant.date)
                             print(quant.type)
                             print(quant.rank)
-                            print(quant.seekingalpha_symbol)
+                            print(quant.quant_stock.symbol)
                             print(quant.quant)
                             print(quant.rating_seeking_alpha)
                             print(quant.rating_wall_street)
