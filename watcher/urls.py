@@ -22,8 +22,8 @@ from watcher.views.quant import historical, score_or_count
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("fetch_prices/", fetch_prices),
-    path("send_alerts/", send_alerts),
+    path("cron/fetch_prices/", fetch_prices),
+    path("cron/send_alerts/", send_alerts),
     path("cron/compile_quant/", compile_quant),
     path("quant/", score_or_count, {"value_to_display": "score"}),
     path("quant/score", score_or_count, {"value_to_display": "score"}),
