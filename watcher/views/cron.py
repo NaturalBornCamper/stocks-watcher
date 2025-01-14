@@ -156,8 +156,8 @@ def send_alerts(request):
                 pass
 
         if subject and body:
-            yahoo_symbol = f"{alert.stock.symbol}{YAHOO_CAD_SUFFIX if alert.stock.currency == CURRENCY_CAD else ""}"
-            sa_symbol = f"{alert.stock.symbol}{SEEKING_ALPHA_CAD_PREFIX if alert.stock.currency == CURRENCY_CAD else ""}"
+            yahoo_symbol = f"{alert.stock.symbol}{YAHOO_CAD_SUFFIX if alert.stock.currency == CURRENCY_CAD else ''}"
+            sa_symbol = f"{alert.stock.symbol}{SEEKING_ALPHA_CAD_PREFIX if alert.stock.currency == CURRENCY_CAD else ''}"
             body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{yahoo_symbol}\">https://ca.finance.yahoo.com/quote/{yahoo_symbol}</a>"
             body += f"\n<a href=\"https://seekingalpha.com/symbol/{sa_symbol}\">https://seekingalpha.com/symbol/{sa_symbol}</a>"
             cprint(COLORS.BRIGHT_BLUE, subject)

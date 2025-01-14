@@ -1,12 +1,18 @@
 from django.core.management.base import BaseCommand
+from django.db import connection
 
-from django.core.management.base import BaseCommand
-
-from watcher.models import CompiledQuant, Quant
+from watcher.models import CompiledQuant, Quant, QuantStock
 
 
+# Usage: python manage.py db_operations empty_table
 # Usage: python manage.py db_operations empty_quant
 # Usage: python manage.py db_operations empty_compiled_quant
+# Usage: python manage.py db_operations empty_all_quant
+
+def truncate_and_reset_auto_increment(table_name):
+    with connection.cursor() as cursor:
+        cursor.execute(f"DELETE FROM {table_name};")
+        cursor.execute(f"DELETE FROM sqlite_sequence WHERE name = '{table_name}';")
 
 
 class Command(BaseCommand):
@@ -18,7 +24,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         operation = options['operation']
 
-        if operation == 'empty_quant':
-            Quant.objects.all().delete()
+        if operation == 'empty_quant_stock':
+            truncate_and_reset_auto_increment(QuantStock._meta.db_table)
+        elif operation == 'empty_quant':
+            truncate_and_reset_auto_increment(Quant._meta.db_table)
         elif operation == 'empty_compiled_quant':
-            CompiledQuant.objects.all().delete()
+            truncate_and_reset_auto_increment(CompiledQuant._meta.db_table)
+        elif operation == 'empty_all_quant':
+            truncate_and_reset_auto_increment(CompiledQuant._meta.db_table)
+            truncate_and_reset_auto_increment(Quant._meta.db_table)
+            truncate_and_reset_auto_increment(QuantStock._meta.db_table)

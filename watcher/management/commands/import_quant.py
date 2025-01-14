@@ -7,7 +7,8 @@ from django.core.management.base import BaseCommand
 
 from watcher.models import Quant, QuantStock
 
-# Usage: python manage.py import_quant quant.csv
+# python manage.py import_quant /path/to/your/csv_file.csv
+# python manage.py import_quant "Quant Dumps/2024-01.csv"
 
 
 EXCLUSION_LIST = [
@@ -22,9 +23,6 @@ EXCLUSION_LIST = [
 
 BULK_INSERTION = True
 
-
-# python manage.py import_quant /path/to/your/csv_file.csv
-# python manage.py import_quant "Quant Dumps/2024-01_quant.csv"
 
 # Converts values like 1.2B to 1200M
 def convert_market_cap_to_millions(string_value: str, symbol: str) -> float | None:
@@ -43,7 +41,9 @@ def convert_market_cap_to_millions(string_value: str, symbol: str) -> float | No
         case "T":
             multiplier = 1000000
         case _:
-            raise Exception(f"Market cap for {symbol} has an unknown value: \"{string_value}\". Expected suffixes are K/M/B/T")
+            raise Exception(
+                f"Market cap for {symbol} has an unknown value: \"{string_value}\". Expected suffixes are K/M/B/T"
+            )
 
     return float(string_value[:-1]) * multiplier
 
