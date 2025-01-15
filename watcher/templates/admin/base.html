@@ -3,6 +3,24 @@
 
 {% block extrastyle %}{{ block.super }}
     <style>
+        .item-notes {
+            cursor: default;
+        }
+
+        .tooltip-text {
+            cursor: auto;
+            visibility: hidden;
+            background-color: #000;
+            padding: 1em 1em 1em 2em;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            font-size: 125%;
+        }
+
+        .item-notes:hover .tooltip-text {
+            visibility: visible;
+        }
     </style>
 {% endblock %}
 

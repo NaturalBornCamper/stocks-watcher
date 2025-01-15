@@ -1,6 +1,5 @@
 TODO:
 -Alert for VFV cheapest in 180 days also, for nephews (even if I already have one for 30 days, set a note that it's for nephews)
--Make Stocks/Alerts show notes just like Game Library
 -Make the DecayCompiledQuant algorithm
  One with decay value going down linearly
  One with decay value going down with 1/x function (Or maybe a bit less strong? 1/x might be perfect though)
