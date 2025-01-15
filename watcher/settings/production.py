@@ -11,3 +11,6 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# Root www folder on the server
+STATIC_ROOT = getenv('STATIC_ROOT', BASE_DIR / "static")

@@ -1,8 +1,8 @@
-import imp
 import os
 import sys
+from importlib import import_module
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-wsgi = imp.load_source('wsgi', 'watcher/wsgi.py')
+wsgi = import_module('watcher.wsgi')
 application = wsgi.application
