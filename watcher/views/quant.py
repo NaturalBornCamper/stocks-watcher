@@ -55,5 +55,9 @@ def score_or_count(request, value_to_display="score"):
 
 # TODO See specific quant category for a specific month (just like on Seeking Alpha) [/quant/historical/<type>/<date>]
 # TODO Get distinct dates from DB and create menu on top to avoid having to write manually in URL bar
-def historical(request, date: str = None):
+def historical(request, type: str, date: str = None):
+    pass
+
+
+def stock(request, symbol: str):
     pass

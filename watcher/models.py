@@ -95,7 +95,9 @@ class Alert(models.Model):
 
 
 class QuantStock(models.Model):
-    stock = models.ForeignKey(Stock, on_delete=models.SET_NULL, db_index=True, blank=True, null=True)
+    stock = models.OneToOneField(
+        Stock, on_delete=models.SET_NULL, db_index=True, blank=True, null=True, related_name="quant_stock"
+    )
     symbol = models.CharField(max_length=10, db_index=True, unique=True)
     name = models.CharField(max_length=255)
 
@@ -138,8 +140,12 @@ class Quant(models.Model):
     type = models.CharField(max_length=255, choices=TYPES)
     rank = models.PositiveSmallIntegerField()
     quant = models.DecimalField(max_digits=3, decimal_places=2)
-    rating_seeking_alpha = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
-    rating_wall_street = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
+    rating_seeking_alpha = models.DecimalField(
+        max_digits=3, decimal_places=2, blank=True, null=True, verbose_name="Seeking Alpha Rating"
+    )
+    rating_wall_street = models.DecimalField(
+        max_digits=3, decimal_places=2, blank=True, null=True, verbose_name="Wall Street Rating"
+    )
     market_cap_millions = models.FloatField(blank=True, null=True)
     dividend_yield = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     valuation = models.CharField(max_length=2)

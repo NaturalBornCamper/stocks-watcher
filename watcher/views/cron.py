@@ -160,11 +160,12 @@ def send_alerts(request):
             sa_symbol = f"{alert.stock.symbol}{SEEKING_ALPHA_CAD_PREFIX if alert.stock.currency == CURRENCY_CAD else ''}"
             body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{yahoo_symbol}\">https://ca.finance.yahoo.com/quote/{yahoo_symbol}</a>"
             body += f"\n<a href=\"https://seekingalpha.com/symbol/{sa_symbol}\">https://seekingalpha.com/symbol/{sa_symbol}</a>"
+            body += f"\n\n{alert.notes}"
             cprint(COLORS.BRIGHT_BLUE, subject)
             cprint(COLORS.BRIGHT_BLUE, body)
             send_email(
                 to=alert.recipient if alert.recipient else EMAIL_DEFAULT_RECIPIENT,
-                subject=subject,
+                subject=alert.name if alert.name else subject,
                 body=body,
             )
 

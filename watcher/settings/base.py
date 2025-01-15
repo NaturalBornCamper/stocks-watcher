@@ -120,6 +120,8 @@ EMAIL_USE_TLS = getenv("EMAIL_USE_TLS", "")
 EMAIL_HOST_USER = getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = getenv("EMAIL_HOST_PASSWORD", "")
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
 # LOGGING = {
 #     'version': 1,
 #     'disable_existing_loggers': False,

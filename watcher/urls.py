@@ -17,16 +17,20 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from watcher.views.cron import fetch_prices, send_alerts, compile_quant
-from watcher.views.quant import historical, score_or_count
+from watcher.views import cron, quant
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("cron/fetch_prices/", fetch_prices),
-    path("cron/send_alerts/", send_alerts),
-    path("cron/compile_quant/", compile_quant),
-    path("quant/", score_or_count, {"value_to_display": "score"}),
-    path("quant/score", score_or_count, {"value_to_display": "score"}),
-    path("quant/count", score_or_count, {"value_to_display": "count"}),
-    path("quant/historical/<type>/<date>", historical),
+
+    # Cronjobs
+    path("cron/fetch_prices/", cron.fetch_prices, name="cron.fetch_prices"),
+    path("cron/send_alerts/", cron.send_alerts, name="cron.send_alerts"),
+    path("cron/compile_quant/", cron.compile_quant, name="cron.compile_quant"),
+
+    # Quant
+    path("quant/", quant.score_or_count, {"value_to_display": "score"}, name="quant"),
+    path("quant/score", quant.score_or_count, {"value_to_display": "score"}, name="quant.score"),
+    path("quant/count", quant.score_or_count, {"value_to_display": "count"}, name="quant.count"),
+    path("quant/historical/<type>/<date>", quant.historical, name="quant.stock"),
+    path("quant/stock/<quant_stock>", quant.stock, name="quant.stock"),
 ]
