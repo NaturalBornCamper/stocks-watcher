@@ -7,7 +7,7 @@ import sys
 # TODO Add watches/alerts to get notified if price changed of +/-5%, 10%, etc. Then add my entire portfolio on the app
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "watcher.settings.dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.dev")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

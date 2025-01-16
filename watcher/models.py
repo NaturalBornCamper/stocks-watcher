@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import UniqueConstraint
 
 from watcher.constants import CURRENCY_USD, CURRENCY_CAD
-from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
+from settings.base import EMAIL_DEFAULT_RECIPIENT
 
 
 # TODO Stock Category (optional)? Then I need a category editor? Might be uselful if others want to use it

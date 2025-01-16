@@ -16,8 +16,8 @@ from watcher.providers.alpha_vantage_rapidapi import AlphaVantageRapidAPI
 from watcher.providers.eodhd import EODHD
 from watcher.providers.marketstack import MarketStack
 from watcher.providers.mboum import Mboum
-from watcher.settings.base import EMAIL_DEFAULT_RECIPIENT
-from watcher.utils.helpers import getenv
+from settings.base import EMAIL_DEFAULT_RECIPIENT
+from utils.helpers import getenv
 
 MAX_API_QUERY = 5
 MAX_QUANT_TYPES_PER_RUN = 5

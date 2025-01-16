@@ -1,5 +1,2 @@
 # Normalize line endings
 * text=auto eol=lf
-
-# Ignore permission changes
-* -diff

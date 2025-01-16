@@ -9,17 +9,16 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import os
 from pathlib import Path
 
-from watcher.utils.helpers import getenv
+from utils.helpers import getenv
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getenv("DEBUG", False)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # This points to same level as manage.py
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -71,7 +70,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "watcher.wsgi.application"
+WSGI_APPLICATION = "wsgi.application"
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

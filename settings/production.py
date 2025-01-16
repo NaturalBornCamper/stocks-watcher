@@ -1,7 +1,4 @@
-import os
-
-from watcher.settings.base import *
-from watcher.utils.helpers import getenv
+from settings.base import *
 
 ALLOWED_HOSTS = getenv('ALLOWED_HOSTS').split(',')
 
