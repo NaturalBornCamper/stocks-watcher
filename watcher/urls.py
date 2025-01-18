@@ -26,10 +26,12 @@ urlpatterns = [
     path("cron/fetch_prices/", cron.fetch_prices, name="cron.fetch_prices"),
     path("cron/send_alerts/", cron.send_alerts, name="cron.send_alerts"),
     path("cron/compile_quant/", cron.compile_quant, name="cron.compile_quant"),
+    path("cron/compile_quant_decay/", cron.compile_quant_decay, name="cron.compile_quant_decay"),
 
     # Quant
     path("quant/", quant.score_or_count, {"value_to_display": "score"}, name="quant"),
     path("quant/score", quant.score_or_count, {"value_to_display": "score"}, name="quant.score"),
+    path("quant/score_decay", quant.score_or_count, {"value_to_display": "score_decay"}, name="quant.score_decay"),
     path("quant/count", quant.score_or_count, {"value_to_display": "count"}, name="quant.count"),
     path("quant/historical/<type>/<date>", quant.historical, name="quant.stock"),
     path("quant/stock/<quant_stock>", quant.stock, name="quant.stock"),

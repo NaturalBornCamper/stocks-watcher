@@ -22,7 +22,7 @@
                 {{ stock.name }}
             </td>
             {% for type in stock.types.values %}
-                {% if value_to_display == "score" %}
+                {% if value_to_display == "score" or value_to_display == "score_decay" %}
                     <td data-sort="{{ type.score }}" title="Count: {{ type.count }}">{{ type.score }} ({{ type.count }})</td>
                 {% elif value_to_display == "count" %}
                     <td data-sort="{{ type.count }}" title="Score: {{ type.score }}">{{ type.count }}</td>

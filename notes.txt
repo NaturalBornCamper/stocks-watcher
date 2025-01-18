@@ -1,17 +1,23 @@
 TODO:
 -Alert for VFV cheapest in 180 days also, for nephews (even if I already have one for 30 days, set a note that it's for nephews)
 -Make the DecayCompiledQuant algorithm
- One with decay value going down linearly
- One with decay value going down with 1/x function (Or maybe a bit less strong? 1/x might be perfect though)
+ One with decay value going down with 1/x or quadratic function (Or maybe a bit less strong? 1/x might be perfect though)
 -Make the other quant views
  https://docs.djangoproject.com/en/5.0/topics/http/urls/#passing-extra-options-to-view-functions
+ Quant page for a month, so I can basically see the same data as Excel, but split it different tables on the same page instead of one long table
  Average "quant" column of the Quant table for each stock instead of my own custom score
  Quant page for a certain stock, that will show its rank for each month, so I can have the details for a stock
   Showing the history of each type of quant it was in
- Quant page for a month, so I can basically see the same data as Excel, but split it different tables on the same page instead of one long table
  Quant page for a specific type. Not sure how the data will show on the page, TBD
  Page for average of each category.
   For example top technology, all stocks that were in at least once have the total time they were in, the average of each column, their calculated rank
+-Quant views changes
+ Menu to open each quant view
+ Filter to show minimum score/count in at least one of the types to show a stock in the list. Right now there are 3313.. too much
+  Min score 50 by default I think. I can always show all with a button
+ Filter/search for stock
+ (All these filters and options will be different according to the quant view also)
+
 
 
 -Add Zacks monthly top 5. Or top 10? Also free 30 days

@@ -1,9 +1,10 @@
 import copy
+from pprint import pprint
 
 from django.http import HttpResponse
 from django.template import loader
 
-from watcher.models import Quant, CompiledQuant
+from watcher.models import Quant, CompiledQuant, CompiledQuantDecay
 
 DEFAULT_PER_PAGE = 20
 INDEX_SCORE = 0
@@ -30,7 +31,9 @@ for slug, name in Quant.TYPES.items():
 #  - count = Number of times each stock was in the quant
 def score_or_count(request, value_to_display="score"):
     quant_list = {}
-    for compiled_quant_stock_type in CompiledQuant.objects.all():
+    quant_model = CompiledQuantDecay if value_to_display == "score_decay" else CompiledQuant
+
+    for compiled_quant_stock_type in quant_model.objects.all():
         if compiled_quant_stock_type.quant_stock.symbol not in quant_list:
             quant_list[compiled_quant_stock_type.quant_stock.symbol] = {
                 "name": compiled_quant_stock_type.quant_stock.name,

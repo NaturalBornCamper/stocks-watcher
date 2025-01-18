@@ -1,23 +1,21 @@
-from datetime import datetime, timedelta
-from pprint import pprint
+from datetime import datetime, timedelta, date
 
 from django.core.mail import send_mail
-from django.db.models import F, ExpressionWrapper, fields
-from django.db.models import Q, Count, Sum, Value, Max
-from django.forms import DurationField
+from django.db.models import F
+from django.db.models import Q, Count, Sum, Max
 from django.http import HttpResponse
 from pyrotools.console import cprint, COLORS
 from pyrotools.log import Log
 
+from settings.base import EMAIL_DEFAULT_RECIPIENT
+from utils.helpers import getenv
 from watcher.constants import CURRENCY_USD, YAHOO_CAD_SUFFIX, CURRENCY_CAD, SEEKING_ALPHA_CAD_PREFIX
-from watcher.models import Stock, Price, Alert, Quant, CompiledQuant, QuantStock
+from watcher.models import Stock, Price, Alert, Quant, CompiledQuant, QuantStock, CompiledQuantDecay
 from watcher.providers.alpha_vantage import AlphaVantage
 from watcher.providers.alpha_vantage_rapidapi import AlphaVantageRapidAPI
 from watcher.providers.eodhd import EODHD
 from watcher.providers.marketstack import MarketStack
 from watcher.providers.mboum import Mboum
-from settings.base import EMAIL_DEFAULT_RECIPIENT
-from utils.helpers import getenv
 
 MAX_API_QUERY = 5
 MAX_QUANT_TYPES_PER_RUN = 5
@@ -33,6 +31,28 @@ def send_email(to: str, subject: str, body: str):
         fail_silently=False,
         html_message=body.replace("\n", "<br>"),
     )
+
+
+# Returns the amount of months between two dates (dates must be the first of the month)
+def get_distance_in_months(earliest_date: datetime.date, latest_date: datetime.date) -> int:
+    if not isinstance(earliest_date, date) or not isinstance(latest_date, date):
+        raise TypeError(f"Dates must be datetime.date objects. Types: {type(earliest_date)}, {type(latest_date)}")
+
+    if earliest_date.day != 1 or latest_date.day != 1:
+        raise ValueError(f"Dates must be the first of the month. date1: {earliest_date}, date2: {latest_date}")
+
+    months = (latest_date.year - earliest_date.year) * 12 + (latest_date.month - earliest_date.month)
+    return months
+
+
+# Goes back <months_to_rewind> in the past from a given date and returns the first day of that month
+def rewind_months(from_date: date, months_to_rewind) -> date:
+    adjusted_year, adjusted_month = from_date.year, from_date.month - months_to_rewind
+    if adjusted_month < 1:
+        adjusted_year -= 1
+        adjusted_month += 12
+
+    return date(adjusted_year, adjusted_month, 1)
 
 
 # TODO Find a way to not update stock last fetch date if updated before 5pm (closing price not available yet). Change field to datetime and look if less than 5pm instead?
@@ -121,7 +141,6 @@ def send_alerts(request):
         cprint(COLORS.CYAN, last_price)
 
         today = datetime.today()
-        time_threshold = today - timedelta(days=(alert.days if alert.days else 0))
         subject = body = ""
 
         # TODO TYPE_INTERVAL_CHEAPEST and TYPE_INTERVAL_HIGHEST have a lot of duplicate code, could be refactored
@@ -233,87 +252,58 @@ def compile_quant(request):
     return HttpResponse(f"Compiled {len(types_to_update)} quant types")
 
 
-# TODO: NOT IMPLEMENTED YET, NO IDEA WHAT THIS DOES AT THE MOMENT, BUT IT CRASHES FOR SURE
 def compile_quant_decay(request):
-    max_quant_types = request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN)
+    max_quant_types = int(request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN))
+    decay_months = int(request.GET.get("decay_months", CompiledQuantDecay.DECAY_MONTHS))
+    print(f"Max decay distance: {decay_months}")
 
-    # Calculate the current date and define the decay factor for each month
-    current_date = datetime.now().date()
-    print(current_date)
+    # Builds the decay factor list of length (max_decay_distance + 1). For example:
+    # max_decay_distance 3 => [1.0, 0.75, 0.5, 0.25]
+    # max_decay_distance 1 => [1.0, 0.5]
+    decay_factors = [1.0 - (i / (decay_months)) for i in range(decay_months)]
+    print(f"Decay factors: {decay_factors}")
 
-    # Calculate the difference in months
-    # diff_in_months = ExpressionWrapper(
-    #     expression=Func(F('date'), Value(current_date), function='AGE'),
-    #     output_field=IntegerField()
-    # )
-    diff_in_months = ExpressionWrapper(
-        F('date') - Value(current_date),
-        output_field=DurationField()
-    )
+    latest_quant_dump_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
+    if not latest_quant_dump_date:
+        return HttpResponse("No quant data found")
 
-    # Calculate the number of months as an integer
-    # num_months = Func(diff_in_months, Value(0), function='EXTRACT')
+    earliest_quant_date = rewind_months(latest_quant_dump_date, decay_months - 1)
 
-    latest_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
-    pprint(latest_date)
-
+    # Build array of quant types to compile
     types_to_update = []
     for quant_type in Quant.TYPES.keys():
-        if CompiledQuant.objects.filter(date__gt=latest_date, type=quant_type).exists():
+        if CompiledQuantDecay.objects.filter(latest_quant_date__gte=earliest_quant_date, type=quant_type).exists():
             continue
         if len(types_to_update) >= max_quant_types:
             break
         types_to_update.append(quant_type)
-    # pprint(types_to_update)
 
-    # score_expression = 101 - F('rank') * (1 - (diff_in_months * DECAY_FACTOR))
-    # score_expression = 101 - F('rank') * (1 - (num_months * DECAY_FACTOR))
-    fuck_test = ExpressionWrapper(datetime.now().date() - F('date'), output_field=fields.DurationField)
-    score_expression2 = 101 - F('rank') * (1 - (fuck_test * DECAY_FACTOR))
-    score_expression = Sum(101 - F('rank'))
-    diff = ExpressionWrapper(
-        datetime.now().date() - F('date'),
-        output_field=fields.DurationField()
-    )
+    compiled_quants_with_decay = {}
     for current_type in types_to_update:
-        # try:
-        compiled_type = (
-            Quant.objects
-            .values("seekingalpha_symbol", "type")
-            .filter(type=current_type)
-            # .annotate(diff=diff)
-            # .annotate(count=Count("seekingalpha_symbol"), score=score_expression)
-            # .annotate(count=Count("seekingalpha_symbol"), score=score_expression, diff_in_months=ExtractMonth('diff'))
-            .annotate(count=Count("seekingalpha_symbol"), score=score_expression)
-            .annotate(days_difference_delta=datetime.now().date() - F('date'))  # This returns a TimeDelta
-            # .annotate(days_difference_delta=datetime.now().date() - F('date'))
-            # .annotate(gg=ExpressionWrapper((datetime.now().date() - F('date')) * 100))
-            # .annotate(gg=ExpressionWrapper((datetime.now().date() - F('date')) - F('rank'), output_field=DecimalField))
-            # .annotate(fuck_test=score_expression2)
-            .annotate(days_difference_delta_multiplied=ExpressionWrapper((datetime.now().date() - F('date')) * 123))
-            # .annotate(days_difference_delta_multiplied=(datetime.now().date() - F('date'))*123)
-            # .annotate(
-            #     days_difference=Cast(
-            #         Cast('JulianDay', datetime.now().date()) - Cast('JulianDay', F('date')), output_field=IntegerField())
-            #         )
-            .order_by("-score").all()
-        )
-        # except Exception as e:
-        #     cprint(color=COLORS.RED, message=e.message)
-        #     exit(0)
-        try:
-            print(compiled_type.count())
-            pprint(compiled_type)
-        except Exception as e:
-            cprint(color=COLORS.RED, message=e.message)
-            exit(0)
-        #
-        # compiled_type_instances = [CompiledQuant(**entry) for entry in compiled_type]
-        # CompiledQuant.objects.bulk_create(
-        #     compiled_type_instances,
-        #     update_conflicts=True,
-        #     update_fields=["count", "score"],
-        #     unique_fields=["seekingalpha_symbol", "type"],
-        # )
+        print(f"Processing quant type: {Quant.TYPES[current_type]}")
 
-    return HttpResponse("yo")
+        # Clear old values
+        CompiledQuantDecay.objects.filter(type=current_type).delete()
+
+        # Get all quant data with given type and date > maximum months back
+        for quant in (Quant.objects.filter(type=current_type, date__gte=earliest_quant_date).order_by("date")):
+            decay_factor = decay_factors[get_distance_in_months(quant.date, latest_quant_dump_date)]
+
+            # Add quant_stock to the dictionary if it doesn't exist yet
+            if quant.quant_stock not in compiled_quants_with_decay:
+                compiled_quants_with_decay[quant.quant_stock] = CompiledQuantDecay(
+                    quant_stock=quant.quant_stock,
+                    type=current_type,
+                    score=0,
+                    count=0,
+                    latest_quant_date=latest_quant_dump_date
+                )
+
+            # Calculate the new decayed score and append values for debug
+            compiled_quants_with_decay[quant.quant_stock].count += 1
+            compiled_quants_with_decay[quant.quant_stock].score += int(quant.rank * decay_factor)
+
+    if compiled_quants_with_decay:
+        CompiledQuantDecay.objects.bulk_create(compiled_quants_with_decay.values())
+
+    return HttpResponse(f"Compiled {len(types_to_update)} quant types")

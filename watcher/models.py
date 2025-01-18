@@ -46,7 +46,7 @@ class Price(models.Model):
     class Meta:
         constraints = [
             UniqueConstraint(
-                name="unique_stock_date",
+                name="price__unique__stock__date",
                 fields=["stock", "date"]
             ),
         ]
@@ -156,7 +156,7 @@ class Quant(models.Model):
 
     class Meta:
         constraints = [
-            UniqueConstraint(name="pk_date_type_stock", fields=["date", "type", "quant_stock"]),
+            UniqueConstraint(name="quant__unique__date__type__quant_stock", fields=["date", "type", "quant_stock"]),
         ]
 
     @staticmethod
@@ -176,7 +176,7 @@ class Quant(models.Model):
         raise Exception(f"Invalid Quant type requested: {key}")
 
 
-class CompiledQuant(models.Model):
+class CompiledQuantBase(models.Model):
     quant_stock = models.ForeignKey(QuantStock, on_delete=models.CASCADE, db_index=True)
     type = models.CharField(max_length=255, choices=Quant.TYPES, blank=False)
     score = models.PositiveSmallIntegerField(default=0)
@@ -184,6 +184,22 @@ class CompiledQuant(models.Model):
     latest_quant_date = models.DateField(verbose_name="Date of the latest quant dump used for compilation")
 
     class Meta:
+        abstract = True
+
+
+class CompiledQuant(CompiledQuantBase):
+    class Meta:
+        db_table = f"{CompiledQuantBase._meta.model_name}_regular"
         constraints = [
-            UniqueConstraint(fields=['quant_stock', 'type'], name='pk_stock_type')
+            UniqueConstraint(name="compiled_quant__unique__quant_stock__type", fields=["quant_stock", "type"])
+        ]
+
+
+class CompiledQuantDecay(CompiledQuantBase):
+    DECAY_MONTHS = 3
+
+    class Meta:
+        db_table = f"{CompiledQuantBase._meta.model_name}_decay"
+        constraints = [
+            UniqueConstraint(name="compiled_quant_decay__unique__quant_stock__type", fields=["quant_stock", "type"])
         ]
