@@ -1,0 +1,9 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrastyle %}{{ block.super }}
+    <style>
+        .inline-group td.original p {
+            display: none;
+        }
+    </style>
+{% endblock %}

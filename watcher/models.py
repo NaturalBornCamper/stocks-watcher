@@ -28,14 +28,14 @@ class Stock(models.Model):
         super(Stock, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.market}: {self.symbol}) - {self.get_currency_display()} - ({self.price.count()} prices, {self.alert.count()} alerts) - {self.dividend_yield}% dividend"
+        return f"{self.name} ({self.market}: {self.symbol}) - {self.get_currency_display()} - ({self.prices.count()} prices, {self.alerts.count()} alerts) - {self.dividend_yield}% dividend"
 
     class Meta:
         ordering = ["name"]
 
 
 class Price(models.Model):
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True, related_name="price")
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True, related_name="prices")
     date = models.DateField()
     low = models.DecimalField(max_digits=8, decimal_places=2)
     high = models.DecimalField(max_digits=8, decimal_places=2)
@@ -73,7 +73,7 @@ class Alert(models.Model):
         (TYPE_HIGHER_THAN, "Higher Than"),
     ]
 
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True, related_name="alert")
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True, related_name="alerts")
     name = models.CharField(max_length=255, blank=True, verbose_name="Optional Name")
     notes = models.TextField(blank=True)
     type = models.PositiveSmallIntegerField(choices=TYPES, blank=False)
@@ -86,9 +86,9 @@ class Alert(models.Model):
     disable_once_fired = models.BooleanField(default=False, verbose_name="Disable alert after it was fired?")
 
     def __str__(self):
-        bob = f"{self.value}$" if self.value else f"({self.days} days)"
+        value = f"{self.value}$" if self.value else f"({self.days} days)"
         recipient = self.recipient if self.recipient else EMAIL_DEFAULT_RECIPIENT
-        return self.name if self.name else f"{self.stock.name} - {self.get_type_display()} {bob} - Send to {recipient}"
+        return self.name if self.name else f"{self.stock.name} - {self.get_type_display()} {value} - Send to {recipient}"
 
     class Meta:
         ordering = ["stock", "type"]
