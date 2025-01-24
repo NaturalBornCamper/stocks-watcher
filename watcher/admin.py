@@ -19,7 +19,7 @@ class AlertInline(admin.TabularInline):
     extra = 0
     fields = ["name", "notes", "type", "days", "value"]
 
-    # Makes the notes field less oversided
+    # Makes the notes field less oversized
     formfield_overrides = {
         TextField: {'widget': Textarea(attrs={'rows': 2})},
     }
