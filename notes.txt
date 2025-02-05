@@ -1,13 +1,4 @@
 TODO:
--Alert for VFV cheapest in 180 days also, for nephews (even if I already have one for 30 days, set a note that it's for nephews)
--Quant commands for CSV file manipulation
- take csv file/folder as input, recursive scan for csv if folder. Take destination folder as output
- FOR EACH, need to deal with headers. Either delete or add
- Functions
-  Split into YYYY-MM/category.csv
-  Merge everything in a csv per month
-  Merge everything in a csv per category
-  another param to append or replace
 -Make the DecayCompiledQuant algorithm
  One with decay value going down with 1/x or quadratic function (Or maybe a bit less strong? 1/x might be perfect though)
 -Make the other quant views

@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from watcher.admin_filters import DateListFilter
-from watcher.models import Stock, Price, Alert, QuantStock, Quant, CompiledQuant
+from watcher.models import Stock, Price, Alert, QuantStock, Quant, CompiledQuant, CompiledQuantDecay
 
 
 class AlertInline(admin.TabularInline):
@@ -21,17 +21,17 @@ class AlertInline(admin.TabularInline):
 
     # Makes the notes field less oversized
     formfield_overrides = {
-        TextField: {'widget': Textarea(attrs={'rows': 2})},
+        TextField: {"widget": Textarea(attrs={"rows": 2})},
     }
 
     # Renames some column headers verbose_name that are too long
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         field = super().formfield_for_dbfield(db_field, request, **kwargs)
 
-        if db_field.name == 'days':
-            field.label = 'Minimum Days'
-        elif db_field.name == 'value':
-            field.label = 'Value'
+        if db_field.name == "days":
+            field.label = "Minimum Days"
+        elif db_field.name == "value":
+            field.label = "Value"
 
         return field
 
@@ -40,7 +40,7 @@ class StockAdmin(admin.ModelAdmin):
     # Not sure this has any use, might be forgotten code, leaving it for a bit in case an issue arises
     # def get_queryset(self, request):
     #     qs = super().get_queryset(request)
-    #     qs = qs.annotate(prices_count=Count('price'), alerts_count=Count('alert'))
+    #     qs = qs.annotate(prices_count=Count("price"), alerts_count=Count("alert"))
     #     return qs
 
     # Deletes all prices for the selected stocks (useful if there's a stock split and they need to be reset)
@@ -56,7 +56,7 @@ class StockAdmin(admin.ModelAdmin):
     # Adds a link to the Quant details page of a specific stock
     def quant_stock_link(self, stock: Stock) -> str:
         if stock.quant_stock and stock.quant_stock.symbol:
-            url = reverse('quant.stock', args=[stock.quant_stock.symbol])
+            url = reverse("quant.stock", args=[stock.quant_stock.symbol])
             return mark_safe(f"<a href=\"{url}\" target=\"quant_{stock.quant_stock.symbol}\">View Quant</a>")
         return "-"
 
@@ -65,7 +65,7 @@ class StockAdmin(admin.ModelAdmin):
         if stock.notes:
             # Replace newlines with <br> and add links
             notes = stock.notes.replace("\n", "<br>")
-            notes = re.sub(r'(https?://\S+)', rf'<a href="\1" target="{stock.pk}">\1</a>', notes)
+            notes = re.sub(r"(https?://\S+)", rf"<a href=\"\1\" target=\"{stock.pk}\">\1</a>", notes)
             return render_to_string("admin/notes.html", context={"notes": mark_safe(notes)})
         else:
             return ""
@@ -124,7 +124,7 @@ class AlertAdmin(admin.ModelAdmin):
         if alert.notes:
             # Replace newlines with <br> and add links
             notes = alert.notes.replace("\n", "<br>")
-            notes = re.sub(r'(https?://\S+)', rf'<a href="\1" target="{alert.pk}">\1</a>', notes)
+            notes = re.sub(r"(https?://\S+)", rf"<a href=\"\1\" target=\"{alert.pk}\">\1</a>", notes)
             return render_to_string("admin/notes.html", context={"notes": mark_safe(notes)})
         else:
             return ""
@@ -186,3 +186,4 @@ admin.site.register(Alert, AlertAdmin)
 admin.site.register(QuantStock, QuantStockAdmin)
 admin.site.register(Quant, QuantAdmin)
 admin.site.register(CompiledQuant, CompiledQuantAdmin)
+admin.site.register(CompiledQuantDecay, CompiledQuantAdmin)

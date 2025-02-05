@@ -7,9 +7,45 @@ from django.core.management.base import BaseCommand
 
 from watcher.models import Quant, QuantStock
 
-# python manage.py import_quant /path/to/your/csv_file.csv
-# python manage.py import_quant "Quant Dumps/2024-01.csv"
 
+# python manage.py import_quant /path/to/your/csv_file.csv
+# python manage.py import_quant "Quant Dumps/2025-02.csv"
+# python manage.py import_quant "organized_quant/2025-02-01.csv"
+
+class Columns:
+    DATE = 0
+    TYPE = 1
+    RANK = 2
+    SEEKINGALPHA_SYMBOL = 3
+    COMPANY_NAME = 4
+    QUANT = 5
+    RATING_SEEKING_ALPHA = 6
+    RATING_WALL_STREET = 7
+    MARKET_CAP_MILLIONS = 8
+    DIVIDEND_YIELD = 9
+    VALUATION = 10
+    GROWTH = 11
+    PROFITABILITY = 12
+    MOMENTUM = 13
+    EPS_REVISION = 14
+
+COLUMN_NAMES = {
+    Columns.DATE: "Date",
+    Columns.TYPE: "Type",
+    Columns.RANK: "Rank",
+    Columns.SEEKINGALPHA_SYMBOL: "Seeking Alpha Symbol",
+    Columns.COMPANY_NAME: "Company Name",
+    Columns.QUANT: "Quant",
+    Columns.RATING_SEEKING_ALPHA: "Seeking Alpha Rating",
+    Columns.RATING_WALL_STREET: "Wall Street Rating",
+    Columns.MARKET_CAP_MILLIONS: "Market Cap (Millions)",
+    Columns.DIVIDEND_YIELD: "Dividend Yield",
+    Columns.VALUATION: "Valuation",
+    Columns.GROWTH: "Growth",
+    Columns.PROFITABILITY: "Profitability",
+    Columns.MOMENTUM: "Momentum",
+    Columns.EPS_REVISION: "EPS Revision",
+}
 
 EXCLUSION_LIST = [
     "rating: strong buy",
@@ -50,12 +86,11 @@ def convert_market_cap_to_millions(string_value: str, symbol: str) -> float | No
 
 # Remove percentage symbol, useless strings, make sure the empty value "-" is replaced
 def clean(string_value: str) -> str | None:
+    for clip in EXCLUSION_LIST:
+        string_value = re.sub(clip, "", string_value, flags=re.IGNORECASE)
+
     # Remove leading and trailing whitespaces
     string_value = string_value.strip()
-
-    for clip in EXCLUSION_LIST:
-        string_value = re.sub(clip, '', string_value, flags=re.IGNORECASE)
-        # string_value = string_value.replace(clip, "")
 
     if string_value == "-" or string_value == "":
         string_value = None
@@ -64,22 +99,6 @@ def clean(string_value: str) -> str | None:
 
 
 class Command(BaseCommand):
-    DATE = 0
-    TYPE = 1
-    RANK = 2
-    SEEKINGALPHA_SYMBOL = 3
-    COMPANY_NAME = 4
-    QUANT = 5
-    RATING_SEEKING_ALPHA = 6
-    RATING_WALL_STREET = 7
-    MARKET_CAP_MILLIONS = 8
-    DIVIDEND_YIELD = 9
-    VALUATION = 10
-    GROWTH = 11
-    PROFITABILITY = 12
-    MOMENTUM = 13
-    EPS_REVISION = 14
-
     help = 'Import data from a CSV file'
 
     def add_arguments(self, parser):
@@ -101,24 +120,24 @@ class Command(BaseCommand):
 
                     # If no date in column, use current date
                     quant.quant_stock, created = QuantStock.objects.get_or_create(
-                        symbol=row[self.SEEKINGALPHA_SYMBOL],
-                        defaults={"name": row[self.COMPANY_NAME]}
+                        symbol=row[Columns.SEEKINGALPHA_SYMBOL],
+                        defaults={"name": row[Columns.COMPANY_NAME]}
                     )
-                    quant.date = row[self.DATE] if row[self.DATE] else datetime.today()
-                    quant.type = row[self.TYPE]
-                    quant.rank = row[self.RANK]
-                    quant.quant = clean(row[self.QUANT])
-                    quant.rating_seeking_alpha = clean(row[self.RATING_SEEKING_ALPHA])
-                    quant.rating_wall_street = clean(row[self.RATING_WALL_STREET])
+                    quant.date = row[Columns.DATE] if row[Columns.DATE] else datetime.today()
+                    quant.type = row[Columns.TYPE]
+                    quant.rank = row[Columns.RANK]
+                    quant.quant = clean(row[Columns.QUANT])
+                    quant.rating_seeking_alpha = clean(row[Columns.RATING_SEEKING_ALPHA])
+                    quant.rating_wall_street = clean(row[Columns.RATING_WALL_STREET])
                     quant.market_cap_millions = convert_market_cap_to_millions(
-                        row[self.MARKET_CAP_MILLIONS], row[self.SEEKINGALPHA_SYMBOL]
+                        row[Columns.MARKET_CAP_MILLIONS], row[Columns.SEEKINGALPHA_SYMBOL]
                     )
-                    quant.dividend_yield = clean(row[self.DIVIDEND_YIELD])
-                    quant.valuation = row[self.VALUATION]
-                    quant.profitability = row[self.PROFITABILITY]
-                    quant.growth = row[self.GROWTH]
-                    quant.momentum = row[self.MOMENTUM]
-                    quant.eps_revision = row[self.EPS_REVISION]
+                    quant.dividend_yield = clean(row[Columns.DIVIDEND_YIELD])
+                    quant.valuation = row[Columns.VALUATION]
+                    quant.profitability = row[Columns.PROFITABILITY]
+                    quant.growth = row[Columns.GROWTH]
+                    quant.momentum = row[Columns.MOMENTUM]
+                    quant.eps_revision = row[Columns.EPS_REVISION]
 
                     if BULK_INSERTION:
                         quant_list.append(quant)

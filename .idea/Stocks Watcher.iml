@@ -18,8 +18,9 @@
       <excludeFolder url="file://$MODULE_DIR$/venv_laptop" />
       <excludeFolder url="file://$MODULE_DIR$/Quant Dumps" />
       <excludeFolder url="file://$MODULE_DIR$/Zacks Ranks" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (Stocks Watcher)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">

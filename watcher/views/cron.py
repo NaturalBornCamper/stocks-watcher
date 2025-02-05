@@ -266,13 +266,15 @@ def compile_quant_decay(request):
     latest_quant_dump_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
     if not latest_quant_dump_date:
         return HttpResponse("No quant data found")
+    print(f"Latest quant dump: {latest_quant_dump_date}")
 
     earliest_quant_date = rewind_months(latest_quant_dump_date, decay_months - 1)
 
     # Build array of quant types to compile
     types_to_update = []
     for quant_type in Quant.TYPES.keys():
-        if CompiledQuantDecay.objects.filter(latest_quant_date__gte=earliest_quant_date, type=quant_type).exists():
+        if CompiledQuantDecay.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
+            print(f"Quant type already compiled: {quant_type}")
             continue
         if len(types_to_update) >= max_quant_types:
             break
