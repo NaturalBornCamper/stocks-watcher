@@ -56,6 +56,8 @@ class Price(models.Model):
         return f"{self.stock.name} - {self.date} - Open:{self.open}$ - Low:{self.low}$ - High:{self.high}$ - Close:{self.close}$"
 
 
+# TODO Only one field "value" instead of "days" AND "value", who cares if an integer is stored in a decimal field, we can always convert it
+#  Will need in migration to move all the values from "days" to "value"
 # TODO Change "lowest in X" days alert, to activate "secondary" alert when stock goes up X% after a low.
 #  Then I know to buy when it's going back up instead of buying when it keeps going lower and lower
 #  Important: If next day is even lower, it must use this new value as the base for the X% change
@@ -65,12 +67,14 @@ class Alert(models.Model):
     TYPE_INTERVAL_HIGHEST = 2
     TYPE_LOWER_THAN = 3
     TYPE_HIGHER_THAN = 4
+    TYPE_PERCENTAGE_PRICE_CHANGE = 5
 
     TYPES = [
         (TYPE_INTERVAL_CHEAPEST, "Cheapest In X Days"),
         (TYPE_INTERVAL_HIGHEST, "Most Expensive In X Days"),
         (TYPE_LOWER_THAN, "Lower Than"),
         (TYPE_HIGHER_THAN, "Higher Than"),
+        (TYPE_PERCENTAGE_PRICE_CHANGE, "Price changed by at least X%"),
     ]
 
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, db_index=True, related_name="alerts")

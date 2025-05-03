@@ -16,6 +16,8 @@ from watcher.management.commands.import_quant import Columns, COLUMN_NAMES
 # python manage.py quant_manipulations by_type_then_date "Quant Dumps/" organized_quant
 # python manage.py quant_manipulations one_csv_per_date "Quant Dumps/" organized_quant asc
 # python manage.py quant_manipulations one_csv_per_type "Quant Dumps/" organized_quant desc
+# I usually use this one:
+#  python manage.py quant_manipulations one_csv_per_date "organized_quant/" organized_quant
 
 # Recursively reads all quant dump csv files in a folder, and aggregates them into a single dictionary
 def aggregate_csv_quant_files(input_folder: str, first_key: int, second_key: int = None) -> dict:

@@ -1,0 +1,55 @@
+
+Company	Industry	Ticker	Date Added	Price Added	Current Price	% Chg Since Added	Zacks Rank 1 - 5	
+Lam Research	Semiconductor Equipment - Wafer Fabrication	LRCX	12/05/2016	10.05	77.18	667.96	3	
+Microsoft	COMP-SOFTWARE	MSFT	02/01/2016	55.09	394.35	615.83	3	
+Axon Enterprise	Security and Safety Services	AXON	06/03/2020	97.85	529.80	441.44	3	
+Micron Technology	Semiconductor Memory	MU	12/27/2016	23.26	92.80	298.97	4	
+UnitedHealth Group	MED-HMO	UNH	06/22/2015	120.33	468.47	289.32	3	
+CBRE Group	Real Estate - Operations	CBRE	03/13/2017	36.4	141.80	289.56	3	
+JPMorgan Chase & Co.	BANKS-MAJOR REGIONAL	JPM	10/10/2016	68.11	262.36	285.20	1	
+Visa	Financial Transaction Services	V	05/30/2017	94.67	363.81	284.29	2	
+Deere & Company	Manufacturing - Farm Equipment	DE	07/25/2017	126.55	472.00	272.98	3	
+Walmart	Retail - Supermarkets	WMT	05/30/2017	26.04	97.72	275.27	3	
+Block	Internet - Software	XYZ	03/28/2017	17.25	64.79	275.59	3	
+Shopify	Internet - Services	SHOP	09/06/2022	29.94	109.23	264.83	3	
+Caterpillar	Manufacturing - Construction and Mining	CAT	04/18/2017	94.14	336.57	257.52	5	
+MSCI	Business - Software Services	MSCI	10/10/2018	166.96	595.64	256.76	3	
+Palantir Technologies	Technology Services	PLTR	03/26/2024	24.51	87.37	256.47	2	
+Home Depot	BLDG PRD-RT/WHL	HD	10/15/2015	120.27	392.11	226.02	3	
+CACI International	COMP-SERVICES	CACI	12/02/2015	103.31	330.39	219.80	2	
+Broadridge Financial Solutions	Outsourcing	BR	08/29/2017	76.91	244.64	218.09	3	
+Sea Limited	Financial - Investment Funds	SE	03/26/2020	44.04	126.68	187.65	3	
+The Goldman Sachs Group	Financial - Investment Bank	GS	07/11/2018	226.85	615.10	171.15	1	
+HCA Healthcare	Medical - Hospital	HCA	01/07/2019	123.39	311.75	152.65	3	
+Casey's General Stores	Retail - Convenience Stores	CASY	08/20/2019	171.98	410.80	138.86	3	
+Quanta Services	Engineering - R and D Services	PWR	12/23/2021	111.52	254.63	128.33	3	
+Uber Technologies	Internet - Services	UBER	08/16/2019	33.22	75.38	126.91	2	
+Agilent Technologies	Electronics - Testing Equipment	A	07/11/2017	59.86	127.06	112.26	3	
+Ulta Beauty	Retail - Miscellaneous	ULTA	03/25/2020	177.59	354.28	99.49	2	
+Bank of America	Banks - Major Regional	BAC	01/09/2017	22.68	46.05	103.02	3	
+Virtu Financial	Financial - Miscellaneous Services	VIRT	07/31/2023	18.9	36.82	94.81	1	
+American Express	Financial - Miscellaneous Services	AXP	12/23/2021	162.47	298.55	83.76	2	
+Arcosa	Building Products - Miscellaneous	ACA	01/06/2020	45.7	82.63	80.81	5	
+Winnebago Industries	BLDG-MBL/MFG&RV	WGO	07/18/2016	23.3	40.40	73.37	4	
+Procter & Gamble	Soap and Cleaning Materials	PG	03/23/2020	102.43	174.95	70.79	3	
+3M	Diversified Operations	MMM	06/29/2023	98.57	154.17	56.41	3	
+Adobe	Computer - Software	ADBE	03/13/2020	285	446.09	56.52	3	
+GE HealthCare Technologies Inc.	Medical Info Systems	GEHC	01/04/2023	60.49	87.96	45.41	3	
+Rollins	Building Products - Maintenance Service	ROL	01/07/2019	36.5	53.06	45.37	3	
+Cheniere Energy	Oil and Gas - Exploration and Production - United States	LNG	09/06/2022	159.36	222.88	39.86	2	
+Tesla	Automotive - Domestic	TSLA	08/29/2024	205.75	287.96	39.96	3	
+MPLX LP	Oil and Gas - Production and Pipelines	MPLX	03/26/2024	40.69	54.50	33.94	3	
+Disney	Media Conglomerates	DIS	03/23/2020	85.98	113.62	32.15	2	
+Prologis	REIT and Equity Trust - Other	PLD	06/03/2020	95.46	124.57	30.50	3	
+Novo Nordisk	Large Cap Pharmaceuticals	NVO	03/07/2023	72.38	90.07	24.44	4	
+Starbucks	Retail - Restaurants	SBUX	08/16/2019	95.93	115.72	20.63	3	
+Brookfield Infrastructure Partners	Utility - Electric Power	BIP	08/16/2019	26.46	31.37	18.56	2	
+ICF International	Government Services	ICFI	04/23/2018	66.6	78.66	18.10	3	
+Solventum Corporation		SOLV	04/01/2024	69.15	80.79	16.83	4	
+Huntington Ingalls Industries	AEROSPACE/DEFENSE	HII	05/09/2016	155.2	174.21	12.25	3	
+Constellation Brands	Beverages - Alcohol	STZ	04/18/2017	170.12	176.98	4.03	5	
+Chevron	Oil and Gas - Integrated - International	CVX	06/29/2023	154.92	154.06	-0.56	3	
+The J. M. Smucker Co.	Food - Miscellaneous	SJM	08/29/2024	114.73	111.87	-2.49	3	
+Celanese	Chemical - Diversified 	CE	12/05/2016	79.1	48.63	-38.52	5	
+Enphase Energy	Solar	ENPH	07/31/2023	154.33	53.89	-65.08	3	
+Intellia Therapeutics	Medical - Biomedical and Genetics	NTLA	03/07/2023	40.08	9.64	-75.95	2	

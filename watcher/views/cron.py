@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date
+from logging import lastResort
 
 from django.core.mail import send_mail
 from django.db.models import F
@@ -151,7 +152,7 @@ def send_alerts(request):
                 if price is not None:
                     days_diff = (today.date() - price.date).days
                     if days_diff > alert.days:
-                        subject = f"{alert.stock.name} is the cheapest it has been in {days_diff} days"
+                        subject = f"{alert.stock.name}({alert.stock.symbol}) is the cheapest it has been in {days_diff} days"
                         body = f"Price for {alert.stock.name} closed at {last_price}$ the cheapest in the past {days_diff} days"
                         body += f" (Last time was on {price.date})"
             case Alert.TYPE_INTERVAL_HIGHEST:
@@ -160,17 +161,25 @@ def send_alerts(request):
                 if price is not None:
                     days_diff = (today.date() - price.date).days
                     if days_diff > alert.days:
-                        subject = f"{alert.stock.name} is the highest it has been in {days_diff} days"
+                        subject = f"{alert.stock.name}({alert.stock.symbol}) is the highest it has been in {days_diff} days"
                         body = f"Price for {alert.stock.name} closed at {last_price}$ the highest in the past {days_diff} days"
                         body += f" (Last time was on {price.date})"
             case Alert.TYPE_LOWER_THAN:
                 if last_price <= alert.value:
-                    subject = f"{alert.stock.name} has reached less than {alert.value}$"
+                    subject = f"{alert.stock.name}({alert.stock.symbol}) has reached less than {alert.value}$"
                     body = f"Price for {alert.stock.name} is lower than {alert.value}$ (closed at {last_price}$)"
             case Alert.TYPE_HIGHER_THAN:
                 if last_price >= alert.value:
-                    subject = f"{alert.stock.name} has reached more than {alert.value}$"
+                    subject = f"{alert.stock.name}({alert.stock.symbol}) has reached more than {alert.value}$"
                     body = f"Price for {alert.stock.name} is higher than {alert.value}$ (closed at {last_price}$)"
+            case Alert.TYPE_PERCENTAGE_PRICE_CHANGE:
+                previous_price = Price.objects.filter(stock=alert.stock, date__lt=today).order_by("-date").first()
+                if previous_price is not None:
+                    percent_change = ((last_price - previous_price.close) / previous_price.close) * 100
+                    if abs(percent_change) >= alert.value:
+                        change_direction = "gained" if percent_change > 0 else "lost"
+                        subject = f"{alert.stock.name}({alert.stock.symbol}) has {change_direction} {percent_change:.1f}%"
+                        body = f"Price for {alert.stock.name} {change_direction} {percent_change:.1f}% (closed at {last_price}$)"
             case _:
                 pass
 
