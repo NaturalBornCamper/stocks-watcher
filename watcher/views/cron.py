@@ -312,7 +312,7 @@ def compile_quant_decay(request):
 
             # Calculate the new decayed score and append values for debug
             compiled_quants_with_decay[quant.quant_stock].count += 1
-            compiled_quants_with_decay[quant.quant_stock].score += int(quant.rank * decay_factor)
+            compiled_quants_with_decay[quant.quant_stock].score += int((101 - quant.rank) * decay_factor)
 
     if compiled_quants_with_decay:
         CompiledQuantDecay.objects.bulk_create(compiled_quants_with_decay.values())
