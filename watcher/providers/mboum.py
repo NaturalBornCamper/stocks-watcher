@@ -60,7 +60,8 @@ class Mboum(AbstractBaseProvider):
                 api_result["prices"].append(
                     Price(
                         stock=stock,
-                        date=datetime.strptime(details["date"], '%d-%m-%Y').strftime('%Y-%m-%d'),
+                        date=details["date"],
+                        # date=datetime.strptime(details["date"], '%d-%m-%Y').strftime('%Y-%m-%d'),
                         low=details["low"],
                         high=details["high"],
                         open=details["open"],
