@@ -13,30 +13,20 @@ class IEX(AbstractBaseProvider):
     API_NAME = "IEX Cloud"
     BASE_URL = "https://api.iex.cloud/v1/data/core/historical_prices"
 
-    @staticmethod
-    def fetch(stock: Stock, get_full_price_history: bool) -> dict:
-        symbol = stock.symbol
-        if symbol:
-            api_request = requests.get(
-                f"{IEX.BASE_URL}/{stock.symbol}",
-                params={
-                    'range': '10y' if get_full_price_history else '1w',
-                    'token': getenv("IEX_API_KEY"),
-                },
-            )
-            api_result = {
-                "url": api_request.request.url,
-                "status_code": api_request.status_code,
-                "prices": [],
-            }
-        else:
-            return {
-                "url": "empty",
-                "status_code": 0,
-                "prices": [],
-                "success": False,
-                "message": f"No symbol provided for {stock.name}"
-            }
+    @classmethod
+    def fetch(cls, stock: Stock, get_full_price_history: bool) -> dict:
+        api_request = requests.get(
+            f"{cls.BASE_URL}/{cls.get_symbol(stock)}",
+            params={
+                'range': '10y' if get_full_price_history else '1w',
+                'token': getenv("IEX_API_KEY"),
+            },
+        )
+        api_result = {
+            "url": api_request.request.url,
+            "status_code": api_request.status_code,
+            "prices": [],
+        }
 
         try:
             json = api_request.json()
@@ -61,12 +51,12 @@ class IEX(AbstractBaseProvider):
             api_result["success"] = True
         else:
             api_result["success"] = False
-            api_result["message"] = IEX.get_json_error(api_request, json, True)
+            api_result["message"] = cls.get_json_error(api_request, json, True)
 
         return api_result
 
-    @staticmethod
-    def get_json_error(api_request: Response, json: dict, incorrect_json_format: bool = False) -> str:
+    @classmethod
+    def get_json_error(cls, api_request: Response, json: dict, incorrect_json_format: bool = False) -> str:
         if error_message := json.get("Error Message"):
             return error_message
         elif error_message := json.get("Note"):

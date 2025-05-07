@@ -10,7 +10,7 @@ from pyrotools.log import Log
 
 from settings.base import EMAIL_DEFAULT_RECIPIENT
 from utils.helpers import getenv
-from watcher.constants import CURRENCY_USD, YAHOO_CAD_SUFFIX, CURRENCY_CAD, SEEKING_ALPHA_CAD_PREFIX
+from watcher.constants import CURRENCY_USD, YAHOO_CAD_SUFFIX, CURRENCY_CAD, SEEKING_ALPHA_CAD_SUFFIX
 from watcher.models import Stock, Price, Alert, Quant, CompiledQuant, QuantStock, CompiledQuantDecay
 from watcher.providers.alpha_vantage import AlphaVantage
 from watcher.providers.alpha_vantage_rapidapi import AlphaVantageRapidAPI
@@ -92,7 +92,7 @@ def fetch_prices(request):
 
     cad_apis = [
         Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
-        AlphaVantage,  # 5/minute, 500/day, adjusted close seems for premium
+        # AlphaVantage,  # 5/minute, 500/day, adjusted close seems for premium
         EODHD,  # 20/day, past year only, includes Canada
         MarketStack,  # 100/month, markets all over the world, only 1 year data
     ]
@@ -185,7 +185,7 @@ def send_alerts(request):
 
         if subject and body:
             yahoo_symbol = f"{alert.stock.symbol}{YAHOO_CAD_SUFFIX if alert.stock.currency == CURRENCY_CAD else ''}"
-            sa_symbol = f"{alert.stock.symbol}{SEEKING_ALPHA_CAD_PREFIX if alert.stock.currency == CURRENCY_CAD else ''}"
+            sa_symbol = f"{alert.stock.symbol}{SEEKING_ALPHA_CAD_SUFFIX if alert.stock.currency == CURRENCY_CAD else ''}"
             body += f"\n<a href=\"https://ca.finance.yahoo.com/quote/{yahoo_symbol}\">https://ca.finance.yahoo.com/quote/{yahoo_symbol}</a>"
             body += f"\n<a href=\"https://seekingalpha.com/symbol/{sa_symbol}\">https://seekingalpha.com/symbol/{sa_symbol}</a>"
             body += f"\n\n{alert.notes}"

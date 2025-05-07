@@ -14,34 +14,24 @@ class AlphaVantage(AbstractBaseProvider):
     BASE_URL = "https://www.alphavantage.co/query"
     CAD_SUFFIX = ".TO"
 
-    @staticmethod
-    def fetch(stock: Stock, get_full_price_history: bool) -> dict:
-        symbol = stock.symbol
-        if symbol:
-            api_request = requests.get(
-                AlphaVantage.BASE_URL,
-                params={
-                    'function': 'TIME_SERIES_DAILY',
-                    # 'function': 'TIME_SERIES_DAILY_ADJUSTED',  # They finally woke up and made it premium properly
-                    'symbol': stock.symbol,
-                    'outputsize': 'full' if get_full_price_history else 'compact',
-                    'datatype': 'json',
-                    'apikey': getenv("ALPHAVANTAGE_API_KEY"),
-                },
-            )
-            api_result = {
-                "url": api_request.request.url,
-                "status_code": api_request.status_code,
-                "prices": [],
-            }
-        else:
-            return {
-                "url": "empty",
-                "status_code": 0,
-                "prices": [],
-                "success": False,
-                "message": f"No symbol provided for {stock.name}"
-            }
+    @classmethod
+    def fetch(cls, stock: Stock, get_full_price_history: bool) -> dict:
+        api_request = requests.get(
+            cls.BASE_URL,
+            params={
+                'function': 'TIME_SERIES_DAILY',
+                # 'function': 'TIME_SERIES_DAILY_ADJUSTED',  # They finally woke up and made it premium properly
+                'symbol': cls.get_symbol(stock),
+                'outputsize': 'full' if get_full_price_history else 'compact',
+                'datatype': 'json',
+                'apikey': getenv("ALPHAVANTAGE_API_KEY"),
+            },
+        )
+        api_result = {
+            "url": api_request.request.url,
+            "status_code": api_request.status_code,
+            "prices": [],
+        }
 
         try:
             json = api_request.json()
@@ -66,12 +56,12 @@ class AlphaVantage(AbstractBaseProvider):
             api_result["success"] = True
         else:
             api_result["success"] = False
-            api_result["message"] = AlphaVantage.get_json_error(api_request, json, "Time Series (Daily)")
+            api_result["message"] = cls.get_json_error(api_request, json, "Time Series (Daily)")
 
         return api_result
 
-    @staticmethod
-    def get_json_error(api_request: Response, json: dict, missing_parameter: str = "") -> str:
+    @classmethod
+    def get_json_error(cls, api_request: Response, json: dict, missing_parameter: str = "") -> str:
         if error_message := json.get("Error Message"):
             return error_message
         elif error_message := json.get("Information"):

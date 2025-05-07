@@ -18,30 +18,20 @@ class MarketStack(AbstractBaseProvider):
     BASE_URL = "http://api.marketstack.com/v1/tickers"
     CAD_SUFFIX = ".XSTE"
 
-    @staticmethod
-    def fetch(stock: Stock, get_full_price_history: bool) -> dict:
-        symbol = stock.marketstack_symbol if stock.marketstack_symbol else stock.symbol
-        if symbol:
-            api_request = requests.get(
-                f"{MarketStack.BASE_URL}/{symbol}/eod",
-                params={
-                    'access_key': getenv('MARKETSTACK_API_KEY'),
-                    'limit': '1000' if get_full_price_history else '7',
-                },
-            )
-            api_result = {
-                "url": api_request.request.url,
-                "status_code": api_request.status_code,
-                "prices": [],
-            }
-        else:
-            return {
-                "url": "empty",
-                "status_code": 0,
-                "prices": [],
-                "success": False,
-                "message": f"No symbol provided for {stock.name}"
-            }
+    @classmethod
+    def fetch(cls, stock: Stock, get_full_price_history: bool) -> dict:
+        api_request = requests.get(
+            f"{cls.BASE_URL}/{cls.get_symbol(stock)}/eod",
+            params={
+                'access_key': getenv('MARKETSTACK_API_KEY'),
+                'limit': '1000' if get_full_price_history else '7',
+            },
+        )
+        api_result = {
+            "url": api_request.request.url,
+            "status_code": api_request.status_code,
+            "prices": [],
+        }
 
         try:
             json = api_request.json()
@@ -53,10 +43,10 @@ class MarketStack(AbstractBaseProvider):
         if 'error' not in json:
             if "data" not in json:
                 api_result["success"] = False
-                api_result["message"] = MarketStack.get_json_error(api_request, json, "data")
+                api_result["message"] = cls.get_json_error(api_request, json, "data")
             elif "eod" not in json["data"]:
                 api_result["success"] = False
-                api_result["message"] = MarketStack.get_json_error(api_request, json, "[data][eod]")
+                api_result["message"] = cls.get_json_error(api_request, json, "[data][eod]")
             else:
                 for details in json['data']['eod']:
                     api_result["prices"].append(
@@ -73,12 +63,12 @@ class MarketStack(AbstractBaseProvider):
                 api_result["success"] = True
         else:
             api_result["success"] = False
-            api_result["message"] = MarketStack.get_json_error(api_request, json)
+            api_result["message"] = cls.get_json_error(api_request, json)
 
         return api_result
 
-    @staticmethod
-    def get_json_error(api_request: Response, json: dict, missing_parameter: str = "") -> str:
+    @classmethod
+    def get_json_error(cls, api_request: Response, json: dict, missing_parameter: str = "") -> str:
         if error_message := json.get("error", {}).get("message"):
             return error_message
         elif missing_parameter:
