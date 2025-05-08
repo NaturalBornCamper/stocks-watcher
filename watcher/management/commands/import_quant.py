@@ -33,18 +33,18 @@ COLUMN_NAMES = {
     Columns.DATE: "Date",
     Columns.TYPE: "Type",
     Columns.RANK: "Rank",
-    Columns.SEEKINGALPHA_SYMBOL: "Seeking Alpha Symbol",
+    Columns.SEEKINGALPHA_SYMBOL: "Seeking Alpha Symbol",    # "Symbol"
     Columns.COMPANY_NAME: "Company Name",
-    Columns.QUANT: "Quant",
-    Columns.RATING_SEEKING_ALPHA: "Seeking Alpha Rating",
-    Columns.RATING_WALL_STREET: "Wall Street Rating",
-    Columns.MARKET_CAP_MILLIONS: "Market Cap (Millions)",
-    Columns.DIVIDEND_YIELD: "Dividend Yield",
-    Columns.VALUATION: "Valuation",
-    Columns.GROWTH: "Growth",
-    Columns.PROFITABILITY: "Profitability",
-    Columns.MOMENTUM: "Momentum",
-    Columns.EPS_REVISION: "EPS Revision",
+    Columns.QUANT: "Quant",   # "Quant Rating"
+    Columns.RATING_SEEKING_ALPHA: "Seeking Alpha Rating",   # "SA Analyst Ratings"
+    Columns.RATING_WALL_STREET: "Wall Street Rating",   # "Wall Street Ratings"
+    Columns.MARKET_CAP_MILLIONS: "Market Cap (Millions)",   # "Market Cap"
+    Columns.DIVIDEND_YIELD: "Dividend Yield",   # "Div Yield"
+    Columns.VALUATION: "Valuation", # "Valuation"
+    Columns.GROWTH: "Growth",   # "Growth"
+    Columns.PROFITABILITY: "Profitability", # "Profitability"
+    Columns.MOMENTUM: "Momentum",   # "Momentum"
+    Columns.EPS_REVISION: "EPS Revision",   # "EPS Rev."
 }
 
 EXCLUSION_LIST = [

@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 
 from watcher.management.commands.import_quant import Columns, COLUMN_NAMES
 
+
 # Executes these 3 steps:
 #  1-Recursively reads all quant dump csv files from an input folder
 #  2-Aggregates them into a single dictionary
@@ -19,48 +20,59 @@ from watcher.management.commands.import_quant import Columns, COLUMN_NAMES
 # I usually use this one:
 #  python manage.py quant_manipulations one_csv_per_date "organized_quant/" organized_quant
 
-# Recursively reads all quant dump csv files in a folder, and aggregates them into a single dictionary
+# Recursively reads all quant dump csv files in a folder and aggregates them into a single dictionary
 def aggregate_csv_quant_files(input_folder: str, first_key: int, second_key: int = None) -> dict:
     csv_filepaths = pathlib.Path(input_folder).rglob("*.csv")
     quant_dict = {}
+    first_key = COLUMN_NAMES[first_key]
+    second_key = COLUMN_NAMES[second_key] if second_key is not None else None
+
     for csv_filepath in csv_filepaths:
         with csv_filepath.open("r") as f:
             csv_reader = csv.reader(f)
+            dict_reader = csv.DictReader(f)
 
-            # If csv_reader's current row and first column == "Date", we know it"s a header so skip it
-            row = next(csv_reader)  # Read the first row
-            if row[Columns.DATE] != COLUMN_NAMES[Columns.DATE]:
-                f.seek(0)
+            for row in dict_reader:
+                new_row = {col: row.get(col, "") for col in COLUMN_NAMES.values()}
 
-            for row in csv_reader:
-                if row[first_key] not in quant_dict:
-                    quant_dict[row[first_key]] = {} if second_key is not None else []
+                first_key_value = new_row.get(first_key, None)
+                if not first_key_value:
+                    print(f"Missing key: {first_key} in row: {new_row}, skipping")
+                    continue
+
+                if first_key_value not in quant_dict:
+                    quant_dict[first_key_value] = {} if second_key is not None else []
                 if second_key is not None:
-                    if row[second_key] not in quant_dict[row[first_key]]:
-                        quant_dict[row[first_key]][row[second_key]] = []
-                    quant_dict[row[first_key]][row[second_key]].append(row)
+                    second_key_value = new_row.get(second_key, None)
+                    if not second_key_value:
+                        print(f"Missing key: {second_key} in row: {new_row}, skipping")
+                        continue
+
+                    if second_key_value not in quant_dict[first_key_value]:
+                        quant_dict[first_key_value][second_key_value] = []
+                    quant_dict[first_key_value][second_key_value].append(new_row)
                 else:
-                    quant_dict[row[first_key]].append(row)
+                    quant_dict[first_key_value].append(new_row)
 
     return quant_dict
 
 
 # Writes a list of lines to a csv file, sorting them if necessary
-def write_lines_to_csv_file(lines, output_file: str, sort_order: str) -> None:
+def write_lines_to_csv_file(lines: list[dict[str, str]], output_file: str, sort_order: str) -> None:
     # Sort quant list by their date (asc or desc), then type, then rank
     # date sorting has no effect on multi-levels export (since a folder per date, or a file per date)
-    if sort_order == "desc":
-        lines.sort(key=lambda x: (-datetime.strptime(x[0], "%Y-%m-%d").timestamp(), x[1], int(x[2])))
-    else:
-        lines.sort(key=lambda x: (datetime.strptime(x[0], "%Y-%m-%d").timestamp(), x[1], int(x[2])))
+    date_col, type_col, rank_col = (COLUMN_NAMES[col] for col in (Columns.DATE, Columns.TYPE, Columns.RANK))
+    lines.sort(key=lambda x: (
+        datetime.strptime(x[date_col], "%Y-%m-%d").timestamp() * (-1 if sort_order == "desc" else 1),
+        x[type_col],
+        int(x[rank_col])
+    ))
 
     with open(output_file, "w", newline='') as f:
-        writer = csv.writer(f, quoting=csv.QUOTE_ALL)
-        # Start with header
-        writer.writerow(COLUMN_NAMES.values())
-
+        dict_writer = csv.DictWriter(f, fieldnames=COLUMN_NAMES.values(), quoting=csv.QUOTE_ALL, lineterminator='\n')
+        dict_writer.writeheader()
         for line in lines:
-            writer.writerow(line)
+            dict_writer.writerow(line)
 
 
 # Splits the generated quant data dump dictionary into the different csv files
