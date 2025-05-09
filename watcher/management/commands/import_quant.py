@@ -5,6 +5,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
+from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
 from watcher.models import Quant, QuantStock
 
 
@@ -12,40 +13,6 @@ from watcher.models import Quant, QuantStock
 # python manage.py import_quant "Quant Dumps/2025-02.csv"
 # python manage.py import_quant "organized_quant/2025-02-01.csv"
 
-class Columns:
-    DATE = 0
-    TYPE = 1
-    RANK = 2
-    SEEKINGALPHA_SYMBOL = 3
-    COMPANY_NAME = 4
-    QUANT = 5
-    RATING_SEEKING_ALPHA = 6
-    RATING_WALL_STREET = 7
-    MARKET_CAP_MILLIONS = 8
-    DIVIDEND_YIELD = 9
-    VALUATION = 10
-    GROWTH = 11
-    PROFITABILITY = 12
-    MOMENTUM = 13
-    EPS_REVISION = 14
-
-COLUMN_NAMES = {
-    Columns.DATE: "Date",
-    Columns.TYPE: "Type",
-    Columns.RANK: "Rank",
-    Columns.SEEKINGALPHA_SYMBOL: "Seeking Alpha Symbol",    # "Symbol"
-    Columns.COMPANY_NAME: "Company Name",
-    Columns.QUANT: "Quant",   # "Quant Rating"
-    Columns.RATING_SEEKING_ALPHA: "Seeking Alpha Rating",   # "SA Analyst Ratings"
-    Columns.RATING_WALL_STREET: "Wall Street Rating",   # "Wall Street Ratings"
-    Columns.MARKET_CAP_MILLIONS: "Market Cap (Millions)",   # "Market Cap"
-    Columns.DIVIDEND_YIELD: "Dividend Yield",   # "Div Yield"
-    Columns.VALUATION: "Valuation", # "Valuation"
-    Columns.GROWTH: "Growth",   # "Growth"
-    Columns.PROFITABILITY: "Profitability", # "Profitability"
-    Columns.MOMENTUM: "Momentum",   # "Momentum"
-    Columns.EPS_REVISION: "EPS Revision",   # "EPS Rev."
-}
 
 EXCLUSION_LIST = [
     "rating: strong buy",
@@ -109,35 +76,38 @@ class Command(BaseCommand):
 
         try:
             with open(csv_file, 'r') as file:
-                csv_reader = csv.reader(file)
-                # Skip header row
-                next(csv_reader)
+                csv_reader = csv.DictReader(file)
 
                 quant_list = []
                 error = False
                 for row in csv_reader:
                     quant = Quant()
 
+                    # Convert row to use standardized column names
+                    new_row = {}
+                    for col_name, possible_names in COLUMN_NAME_VARIANTS.items():
+                        new_row[col_name] = find_matching_value(row, possible_names)
+
                     # If no date in column, use current date
                     quant.quant_stock, created = QuantStock.objects.get_or_create(
-                        symbol=row[Columns.SEEKINGALPHA_SYMBOL],
-                        defaults={"name": row[Columns.COMPANY_NAME]}
+                        symbol=new_row[Columns.SEEKINGALPHA_SYMBOL],
+                        defaults={"name": new_row[Columns.COMPANY_NAME]}
                     )
-                    quant.date = row[Columns.DATE] if row[Columns.DATE] else datetime.today()
-                    quant.type = row[Columns.TYPE]
-                    quant.rank = row[Columns.RANK]
-                    quant.quant = clean(row[Columns.QUANT])
-                    quant.rating_seeking_alpha = clean(row[Columns.RATING_SEEKING_ALPHA])
-                    quant.rating_wall_street = clean(row[Columns.RATING_WALL_STREET])
+                    quant.date = new_row[Columns.DATE] if new_row[Columns.DATE] else datetime.today()
+                    quant.type = new_row[Columns.TYPE]
+                    quant.rank = new_row[Columns.RANK]
+                    quant.quant = clean(new_row[Columns.QUANT])
+                    quant.rating_seeking_alpha = clean(new_row[Columns.RATING_SEEKING_ALPHA])
+                    quant.rating_wall_street = clean(new_row[Columns.RATING_WALL_STREET])
                     quant.market_cap_millions = convert_market_cap_to_millions(
-                        row[Columns.MARKET_CAP_MILLIONS], row[Columns.SEEKINGALPHA_SYMBOL]
+                        new_row[Columns.MARKET_CAP_MILLIONS], new_row[Columns.SEEKINGALPHA_SYMBOL]
                     )
-                    quant.dividend_yield = clean(row[Columns.DIVIDEND_YIELD])
-                    quant.valuation = row[Columns.VALUATION]
-                    quant.profitability = row[Columns.PROFITABILITY]
-                    quant.growth = row[Columns.GROWTH]
-                    quant.momentum = row[Columns.MOMENTUM]
-                    quant.eps_revision = row[Columns.EPS_REVISION]
+                    quant.dividend_yield = clean(new_row[Columns.DIVIDEND_YIELD])
+                    quant.valuation = new_row[Columns.VALUATION]
+                    quant.profitability = new_row[Columns.PROFITABILITY]
+                    quant.growth = new_row[Columns.GROWTH]
+                    quant.momentum = new_row[Columns.MOMENTUM]
+                    quant.eps_revision = new_row[Columns.EPS_REVISION]
 
                     if BULK_INSERTION:
                         quant_list.append(quant)

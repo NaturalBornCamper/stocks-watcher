@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from watcher.management.commands.import_quant import Columns, COLUMN_NAMES
+from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
 
 
 # Executes these 3 steps:
@@ -20,20 +20,21 @@ from watcher.management.commands.import_quant import Columns, COLUMN_NAMES
 # I usually use this one:
 #  python manage.py quant_manipulations one_csv_per_date "organized_quant/" organized_quant
 
+
 # Recursively reads all quant dump csv files in a folder and aggregates them into a single dictionary
-def aggregate_csv_quant_files(input_folder: str, first_key: int, second_key: int = None) -> dict:
+def aggregate_csv_quant_files(input_folder: str, first_key: str, second_key: str = None) -> dict:
     csv_filepaths = pathlib.Path(input_folder).rglob("*.csv")
     quant_dict = {}
-    first_key = COLUMN_NAMES[first_key]
-    second_key = COLUMN_NAMES[second_key] if second_key is not None else None
 
     for csv_filepath in csv_filepaths:
         with csv_filepath.open("r") as f:
-            csv_reader = csv.reader(f)
             dict_reader = csv.DictReader(f)
 
             for row in dict_reader:
-                new_row = {col: row.get(col, "") for col in COLUMN_NAMES.values()}
+                # Convert old column names to new column names
+                new_row = {}
+                for col_name, possible_names in COLUMN_NAME_VARIANTS.items():
+                    new_row[col_name] = find_matching_value(row, possible_names)
 
                 first_key_value = new_row.get(first_key, None)
                 if not first_key_value:
@@ -61,15 +62,15 @@ def aggregate_csv_quant_files(input_folder: str, first_key: int, second_key: int
 def write_lines_to_csv_file(lines: list[dict[str, str]], output_file: str, sort_order: str) -> None:
     # Sort quant list by their date (asc or desc), then type, then rank
     # date sorting has no effect on multi-levels export (since a folder per date, or a file per date)
-    date_col, type_col, rank_col = (COLUMN_NAMES[col] for col in (Columns.DATE, Columns.TYPE, Columns.RANK))
-    lines.sort(key=lambda x: (
-        datetime.strptime(x[date_col], "%Y-%m-%d").timestamp() * (-1 if sort_order == "desc" else 1),
-        x[type_col],
-        int(x[rank_col])
-    ))
+    if sort_order:
+        lines.sort(key=lambda x: (
+            datetime.strptime(x[Columns.DATE], "%Y-%m-%d").timestamp() * (-1 if sort_order == "desc" else 1),
+            x[Columns.TYPE],
+            int(x[Columns.RANK])
+        ))
 
     with open(output_file, "w", newline='') as f:
-        dict_writer = csv.DictWriter(f, fieldnames=COLUMN_NAMES.values(), quoting=csv.QUOTE_ALL, lineterminator='\n')
+        dict_writer = csv.DictWriter(f, fieldnames=COLUMN_NAME_VARIANTS.keys(), quoting=csv.QUOTE_ALL, lineterminator='\n')
         dict_writer.writeheader()
         for line in lines:
             dict_writer.writerow(line)
