@@ -27,7 +27,7 @@ COLUMN_NAME_VARIANTS = {
     Columns.RATING_SEEKING_ALPHA: [Columns.RATING_SEEKING_ALPHA, "SA Analyst Ratings"],
     Columns.RATING_WALL_STREET: [Columns.RATING_WALL_STREET, "Wall Street Ratings"],
     Columns.MARKET_CAP_MILLIONS: [Columns.MARKET_CAP_MILLIONS, "Market Cap"],
-    Columns.DIVIDEND_YIELD: [Columns.DIVIDEND_YIELD, "Div Yield"],
+    Columns.DIVIDEND_YIELD: [Columns.DIVIDEND_YIELD, "Div Yield", "Yield TTM"],
     Columns.VALUATION: [Columns.VALUATION, "Valuation"],
     Columns.GROWTH: [Columns.GROWTH, "Growth"],
     Columns.PROFITABILITY: [Columns.PROFITABILITY, "Profitability"],
