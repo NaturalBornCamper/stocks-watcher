@@ -6,8 +6,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
-from watcher.models import Quant, QuantStock
-
+from quant.models import SAStock, SARating
 
 # python manage.py import_quant /path/to/your/csv_file.csv
 # python manage.py import_quant "Quant Dumps/2025-02.csv"
@@ -81,7 +80,7 @@ class Command(BaseCommand):
                 quant_list = []
                 error = False
                 for row in csv_reader:
-                    quant = Quant()
+                    quant = SARating()
 
                     # Convert row to use standardized column names
                     new_row = {}
@@ -89,7 +88,7 @@ class Command(BaseCommand):
                         new_row[col_name] = find_matching_value(row, possible_names)
 
                     # If no date in column, use current date
-                    quant.quant_stock, created = QuantStock.objects.get_or_create(
+                    quant.sa_stock, created = SAStock.objects.get_or_create(
                         symbol=new_row[Columns.SEEKINGALPHA_SYMBOL],
                         defaults={"name": new_row[Columns.COMPANY_NAME]}
                     )
@@ -119,7 +118,7 @@ class Command(BaseCommand):
                             print(quant.date)
                             print(quant.type)
                             print(quant.rank)
-                            print(quant.quant_stock.symbol)
+                            print(quant.sa_stock.symbol)
                             print(quant.quant)
                             print(quant.rating_seeking_alpha)
                             print(quant.rating_wall_street)
@@ -135,7 +134,7 @@ class Command(BaseCommand):
                             error = True
 
                 if BULK_INSERTION:
-                    Quant.objects.bulk_create(quant_list, ignore_conflicts=True)
+                    SARating.objects.bulk_create(quant_list, ignore_conflicts=True)
 
                 if not error:
                     self.stdout.write(self.style.SUCCESS("Data imported successfully."))

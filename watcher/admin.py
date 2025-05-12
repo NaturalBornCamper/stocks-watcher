@@ -11,7 +11,8 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from watcher.admin_filters import DateListFilter
-from watcher.models import Stock, Price, Alert, QuantStock, Quant, CompiledQuant, CompiledQuantDecay
+from watcher.models import Stock, Price, Alert
+from quant.models import SAStock, SARating, CompiledScore, CompiledScoreDecayed
 
 
 class AlertInline(admin.TabularInline):
@@ -55,9 +56,9 @@ class StockAdmin(admin.ModelAdmin):
 
     # Adds a link to the Quant details page of a specific stock
     def quant_stock_link(self, stock: Stock) -> str:
-        if stock.quant_stock and stock.quant_stock.symbol:
-            url = reverse("quant.stock", args=[stock.quant_stock.symbol])
-            return mark_safe(f"<a href=\"{url}\" target=\"quant_{stock.quant_stock.symbol}\">View Quant</a>")
+        if stock.sa_stock and stock.sa_stock.symbol:
+            url = reverse("quant.stock", args=[stock.sa_stock.symbol])
+            return mark_safe(f"<a href=\"{url}\" target=\"quant_{stock.sa_stock.symbol}\">View Quant</a>")
         return "-"
 
     # Adds a rollover (i) icon that displays game notes
@@ -107,7 +108,7 @@ class StockAdmin(admin.ModelAdmin):
 
     # Model fields to use for custom columns ordering
     notes_hint.admin_order_field = "notes"
-    quant_stock_link.admin_order_field = "quant_stock"
+    quant_stock_link.admin_order_field = "sa_stock"
     dividend_yield_display.admin_order_field = "dividend_yield"
     prices_count.admin_order_field = "prices_count"
     alerts_count.admin_order_field = "alerts_count"
@@ -167,23 +168,23 @@ class QuantStockAdmin(admin.ModelAdmin):
 
 class QuantAdmin(admin.ModelAdmin):
     list_display = [
-        "quant_stock__symbol", "quant_stock__name", "rank", "quant",
+        "sa_stock__symbol", "sa_stock__name", "rank", "quant",
         "rating_seeking_alpha", "rating_wall_street", "type", "date"
     ]
     list_filter = ["type", DateListFilter]
-    search_fields = ["quant_stock__symbol", "quant_stock__name", "type"]
+    search_fields = ["sa_stock__symbol", "sa_stock__name", "type"]
 
 
 class CompiledQuantAdmin(admin.ModelAdmin):
-    list_display = ["quant_stock__symbol", "quant_stock__name", "score", "count", "type", "latest_quant_date"]
+    list_display = ["sa_stock__symbol", "sa_stock__name", "score", "count", "type", "latest_quant_date"]
     list_filter = ["type"]
-    search_fields = ["quant_stock__symbol", "quant_stock__name", "type"]
+    search_fields = ["sa_stock__symbol", "sa_stock__name", "type"]
 
 
 admin.site.register(Stock, StockAdmin)
 admin.site.register(Price, PriceAdmin)
 admin.site.register(Alert, AlertAdmin)
-admin.site.register(QuantStock, QuantStockAdmin)
-admin.site.register(Quant, QuantAdmin)
-admin.site.register(CompiledQuant, CompiledQuantAdmin)
-admin.site.register(CompiledQuantDecay, CompiledQuantAdmin)
+admin.site.register(SAStock, QuantStockAdmin)
+admin.site.register(SARating, QuantAdmin)
+admin.site.register(CompiledScore, CompiledQuantAdmin)
+admin.site.register(CompiledScoreDecayed, CompiledQuantAdmin)

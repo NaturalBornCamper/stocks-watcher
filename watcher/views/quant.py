@@ -4,14 +4,14 @@ from pprint import pprint
 from django.http import HttpResponse
 from django.template import loader
 
-from watcher.models import Quant, CompiledQuant, CompiledQuantDecay
+from quant.models import SARating, CompiledScore, CompiledScoreDecayed
 
 DEFAULT_PER_PAGE = 20
 INDEX_SCORE = 0
 INDEX_COUNT = 1
 INDEX_RANK = 3
 DEFAULT_STOCK_DICT = {}
-for slug, name in Quant.TYPES.items():
+for slug, name in SARating.TYPES.items():
     # print(slug)
     # print(name)
     DEFAULT_STOCK_DICT[slug] = {
@@ -31,16 +31,16 @@ for slug, name in Quant.TYPES.items():
 #  - count = Number of times each stock was in the quant
 def score_or_count(request, value_to_display="score"):
     quant_list = {}
-    quant_model = CompiledQuantDecay if value_to_display == "score_decay" else CompiledQuant
+    quant_model = CompiledScoreDecayed if value_to_display == "score_decay" else CompiledScore
 
     for compiled_quant_stock_type in quant_model.objects.all():
-        if compiled_quant_stock_type.quant_stock.symbol not in quant_list:
-            quant_list[compiled_quant_stock_type.quant_stock.symbol] = {
-                "name": compiled_quant_stock_type.quant_stock.name,
+        if compiled_quant_stock_type.sa_stock.symbol not in quant_list:
+            quant_list[compiled_quant_stock_type.sa_stock.symbol] = {
+                "name": compiled_quant_stock_type.sa_stock.name,
                 "types": copy.deepcopy(DEFAULT_STOCK_DICT)
             }
 
-        quant_list[compiled_quant_stock_type.quant_stock.symbol]["types"][compiled_quant_stock_type.type] = {
+        quant_list[compiled_quant_stock_type.sa_stock.symbol]["types"][compiled_quant_stock_type.type] = {
             # "company": compiled_quant_stock_type.score,
             "score": compiled_quant_stock_type.score,
             "count": compiled_quant_stock_type.count,

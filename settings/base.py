@@ -30,6 +30,7 @@ SECRET_KEY = getenv("DJANGO_SECRET_KEY", "django-insecure-dev-key")
 
 INSTALLED_APPS = [
     "watcher",
+    "quant",
 
     "django.contrib.admin",
     "django.contrib.auth",

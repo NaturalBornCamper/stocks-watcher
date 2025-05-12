@@ -34,5 +34,5 @@ urlpatterns = [
     path("quant/score_decay", quant.score_or_count, {"value_to_display": "score_decay"}, name="quant.score_decay"),
     path("quant/count", quant.score_or_count, {"value_to_display": "count"}, name="quant.count"),
     path("quant/historical/<type>/<date>", quant.historical, name="quant.stock"),
-    path("quant/stock/<quant_stock>", quant.stock, name="quant.stock"),
+    path("quant/stock/<sa_stock>", quant.stock, name="quant.stock"),
 ]

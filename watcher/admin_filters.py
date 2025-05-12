@@ -1,6 +1,6 @@
 from django.contrib.admin import SimpleListFilter
 
-from .models import Quant
+from quant.models import SARating
 
 
 class DateListFilter(SimpleListFilter):
@@ -8,7 +8,7 @@ class DateListFilter(SimpleListFilter):
     parameter_name = 'date'
 
     def lookups(self, request, model_admin):
-        dates = Quant.objects.order_by("-date").values_list('date', flat=True).distinct()
+        dates = SARating.objects.order_by("-date").values_list('date', flat=True).distinct()
         return [(date, date) for date in dates]
 
     def queryset(self, request, queryset):

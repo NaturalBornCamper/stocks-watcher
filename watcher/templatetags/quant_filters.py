@@ -1,6 +1,6 @@
 from django import template
 
-from watcher.models import Quant
+from quant.models import SARating
 from watcher.views.quant import INDEX_SCORE, INDEX_COUNT, INDEX_RANK
 
 register = template.Library()
@@ -16,7 +16,7 @@ register = template.Library()
 
 @register.simple_tag
 def get_types():
-    return Quant.TYPES
+    return SARating.TYPES
 
 
 

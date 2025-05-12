@@ -11,7 +11,8 @@ from pyrotools.log import Log
 from settings.base import EMAIL_DEFAULT_RECIPIENT
 from utils.helpers import getenv
 from watcher.constants import CURRENCY_USD, YAHOO_CAD_SUFFIX, CURRENCY_CAD, SEEKING_ALPHA_CAD_SUFFIX
-from watcher.models import Stock, Price, Alert, Quant, CompiledQuant, QuantStock, CompiledQuantDecay
+from watcher.models import Stock, Price, Alert
+from quant.models import SAStock, SARating, CompiledScore, CompiledScoreDecayed
 from watcher.providers.alpha_vantage import AlphaVantage
 from watcher.providers.alpha_vantage_rapidapi import AlphaVantageRapidAPI
 from watcher.providers.eodhd import EODHD
@@ -211,16 +212,16 @@ def compile_quant(request):
     max_quant_types = int(request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN))
 
     # Get the date of the latest quant data from Seeking Alpha dumps
-    latest_quant_dump_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
+    latest_quant_dump_date = SARating.objects.aggregate(latest_date=Max('date'))['latest_date']
     print(f"Latest quant dump: {latest_quant_dump_date}")
     if not latest_quant_dump_date:
         return HttpResponse("No quant data found")
 
     # Get quant types that have not been compiled yet (compilation date smaller than quant date)
     types_to_update = []
-    for quant_type in Quant.TYPES.keys():
+    for quant_type in SARating.TYPES.keys():
         # Exclude this quant type if it already has a compilation date greater than the latest date
-        if CompiledQuant.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
+        if CompiledScore.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
             print(f"Quant type already compiled: {quant_type}")
             continue
 
@@ -232,17 +233,17 @@ def compile_quant(request):
     # For each quant type, get ALL the quant rows and compile the score
     for current_type in types_to_update:
         compiled_type = (
-            Quant.objects
+            SARating.objects
             .filter(type=current_type)
-            .values("quant_stock", "type")  # Grouping fields
+            .values("sa_stock", "type")  # Grouping fields
             .annotate(count=Count("pk"), score=Sum(101 - F('rank')))
         )
 
-        # Convert the query results to a list of CompiledQuant objects for model insert
+        # Convert the query results to a list of CompiledScore objects for model insert
         compiled_type_instances = []
         for entry in compiled_type:
-            compiled_type_instances.append(CompiledQuant(
-                quant_stock=QuantStock.objects.get(pk=entry["quant_stock"]),
+            compiled_type_instances.append(CompiledScore(
+                sa_stock=SAStock.objects.get(pk=entry["sa_stock"]),
                 type=entry["type"],
                 score=entry["score"],
                 count=entry["count"],
@@ -250,20 +251,20 @@ def compile_quant(request):
             ))
 
         # Update the Compiled Quant table (New stock symbols will be added, existing symbols will be updated)
-        CompiledQuant.objects.bulk_create(
+        CompiledScore.objects.bulk_create(
             compiled_type_instances,
             update_conflicts=True,
             update_fields=["count", "score", "latest_quant_date"],
-            unique_fields=["quant_stock", "type"],  # Fields to match existing rows that need to updating
+            unique_fields=["sa_stock", "type"],  # Fields to match existing rows that need to updating
         )
-        print(f"Compiled type: {Quant.TYPES[current_type]} ({compiled_type.count()} stock symbols)")
+        print(f"Compiled type: {SARating.TYPES[current_type]} ({compiled_type.count()} stock symbols)")
 
     return HttpResponse(f"Compiled {len(types_to_update)} quant types")
 
 
 def compile_quant_decay(request):
     max_quant_types = int(request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN))
-    decay_months = int(request.GET.get("decay_months", CompiledQuantDecay.DECAY_MONTHS))
+    decay_months = int(request.GET.get("decay_months", CompiledScoreDecayed.DECAY_MONTHS))
     print(f"Max decay distance: {decay_months}")
 
     # Builds the decay factor list of length (max_decay_distance + 1). For example:
@@ -272,7 +273,7 @@ def compile_quant_decay(request):
     decay_factors = [1.0 - (i / (decay_months)) for i in range(decay_months)]
     print(f"Decay factors: {decay_factors}")
 
-    latest_quant_dump_date = Quant.objects.aggregate(latest_date=Max('date'))['latest_date']
+    latest_quant_dump_date = SARating.objects.aggregate(latest_date=Max('date'))['latest_date']
     if not latest_quant_dump_date:
         return HttpResponse("No quant data found")
     print(f"Latest quant dump: {latest_quant_dump_date}")
@@ -281,8 +282,8 @@ def compile_quant_decay(request):
 
     # Build array of quant types to compile
     types_to_update = []
-    for quant_type in Quant.TYPES.keys():
-        if CompiledQuantDecay.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
+    for quant_type in SARating.TYPES.keys():
+        if CompiledScoreDecayed.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
             print(f"Quant type already compiled: {quant_type}")
             continue
         if len(types_to_update) >= max_quant_types:
@@ -291,19 +292,19 @@ def compile_quant_decay(request):
 
     compiled_quants_with_decay = {}
     for current_type in types_to_update:
-        print(f"Processing quant type: {Quant.TYPES[current_type]}")
+        print(f"Processing quant type: {SARating.TYPES[current_type]}")
 
         # Clear old values
-        CompiledQuantDecay.objects.filter(type=current_type).delete()
+        CompiledScoreDecayed.objects.filter(type=current_type).delete()
 
         # Get all quant data with given type and date > maximum months back
-        for quant in (Quant.objects.filter(type=current_type, date__gte=earliest_quant_date).order_by("date")):
+        for quant in (SARating.objects.filter(type=current_type, date__gte=earliest_quant_date).order_by("date")):
             decay_factor = decay_factors[get_distance_in_months(quant.date, latest_quant_dump_date)]
 
-            # Add quant_stock to the dictionary if it doesn't exist yet
-            if quant.quant_stock not in compiled_quants_with_decay:
-                compiled_quants_with_decay[quant.quant_stock] = CompiledQuantDecay(
-                    quant_stock=quant.quant_stock,
+            # Add sa_stock to the dictionary if it doesn't exist yet
+            if quant.sa_stock not in compiled_quants_with_decay:
+                compiled_quants_with_decay[quant.sa_stock] = CompiledScoreDecayed(
+                    sa_stock=quant.sa_stock,
                     type=current_type,
                     score=0,
                     count=0,
@@ -311,10 +312,10 @@ def compile_quant_decay(request):
                 )
 
             # Calculate the new decayed score and append values for debug
-            compiled_quants_with_decay[quant.quant_stock].count += 1
-            compiled_quants_with_decay[quant.quant_stock].score += int((101 - quant.rank) * decay_factor)
+            compiled_quants_with_decay[quant.sa_stock].count += 1
+            compiled_quants_with_decay[quant.sa_stock].score += int((101 - quant.rank) * decay_factor)
 
     if compiled_quants_with_decay:
-        CompiledQuantDecay.objects.bulk_create(compiled_quants_with_decay.values())
+        CompiledScoreDecayed.objects.bulk_create(compiled_quants_with_decay.values())
 
     return HttpResponse(f"Compiled {len(types_to_update)} quant types")
