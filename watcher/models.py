@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import UniqueConstraint
 
-from watcher.constants import CURRENCY_USD, CURRENCY_CAD
+from constants import CURRENCY_USD, CURRENCY_CAD
 from settings.base import EMAIL_DEFAULT_RECIPIENT
 
 

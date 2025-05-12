@@ -3,16 +3,14 @@ from typing import Union
 
 from django.contrib import admin, messages
 from django.db.models import QuerySet, TextField
-from django.forms import Textarea, HiddenInput, ModelChoiceField, ModelForm
+from django.forms import Textarea
 from django.http import HttpResponseRedirect, HttpRequest
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from watcher.admin_filters import DateListFilter
 from watcher.models import Stock, Price, Alert
-from quant.models import SAStock, SARating, CompiledScore, CompiledScoreDecayed
 
 
 class AlertInline(admin.TabularInline):
@@ -161,30 +159,6 @@ class AlertAdmin(admin.ModelAdmin):
     notes_hint.admin_order_field = "notes"
 
 
-class QuantStockAdmin(admin.ModelAdmin):
-    list_display = ["symbol", "name", "stock"]
-    search_fields = ["symbol", "name"]
-
-
-class QuantAdmin(admin.ModelAdmin):
-    list_display = [
-        "sa_stock__symbol", "sa_stock__name", "rank", "quant",
-        "rating_seeking_alpha", "rating_wall_street", "type", "date"
-    ]
-    list_filter = ["type", DateListFilter]
-    search_fields = ["sa_stock__symbol", "sa_stock__name", "type"]
-
-
-class CompiledQuantAdmin(admin.ModelAdmin):
-    list_display = ["sa_stock__symbol", "sa_stock__name", "score", "count", "type", "latest_quant_date"]
-    list_filter = ["type"]
-    search_fields = ["sa_stock__symbol", "sa_stock__name", "type"]
-
-
 admin.site.register(Stock, StockAdmin)
 admin.site.register(Price, PriceAdmin)
 admin.site.register(Alert, AlertAdmin)
-admin.site.register(SAStock, QuantStockAdmin)
-admin.site.register(SARating, QuantAdmin)
-admin.site.register(CompiledScore, CompiledQuantAdmin)
-admin.site.register(CompiledScoreDecayed, CompiledQuantAdmin)

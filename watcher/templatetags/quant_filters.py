@@ -1,7 +1,6 @@
 from django import template
 
 from quant.models import SARating
-from watcher.views.quant import INDEX_SCORE, INDEX_COUNT, INDEX_RANK
 
 register = template.Library()
 

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import connection
 
-from watcher.models import CompiledQuant, Quant, QuantStock, CompiledQuantDecay
+from quant.models import CompiledScore, SARating, SAStock, CompiledScoreDecayed
 
 
 # Usage: python manage.py db_operations empty_table
@@ -25,16 +25,16 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         operation = options['operation']
 
-        if operation == 'empty_quant_stock':
-            truncate_and_reset_auto_increment(QuantStock._meta.db_table)
-        elif operation == 'empty_quant':
-            truncate_and_reset_auto_increment(Quant._meta.db_table)
-        elif operation == 'empty_compiled_quant':
-            truncate_and_reset_auto_increment(CompiledQuant._meta.db_table)
-        elif operation == 'empty_compiled_quant_decay':
-            truncate_and_reset_auto_increment(CompiledQuantDecay._meta.db_table)
+        if operation == 'empty_sa_stocks':
+            truncate_and_reset_auto_increment(SAStock._meta.db_table)
+        elif operation == 'empty_sa_ratings':
+            truncate_and_reset_auto_increment(SARating._meta.db_table)
+        elif operation == 'empty_compiled_scores':
+            truncate_and_reset_auto_increment(CompiledScore._meta.db_table)
+        elif operation == 'empty_compiled_scores_decayed':
+            truncate_and_reset_auto_increment(CompiledScoreDecayed._meta.db_table)
         elif operation == 'empty_all_quant':
-            truncate_and_reset_auto_increment(CompiledQuant._meta.db_table)
-            truncate_and_reset_auto_increment(CompiledQuantDecay._meta.db_table)
-            truncate_and_reset_auto_increment(Quant._meta.db_table)
-            truncate_and_reset_auto_increment(QuantStock._meta.db_table)
+            truncate_and_reset_auto_increment(CompiledScore._meta.db_table)
+            truncate_and_reset_auto_increment(CompiledScoreDecayed._meta.db_table)
+            truncate_and_reset_auto_increment(SARating._meta.db_table)
+            truncate_and_reset_auto_increment(SAStock._meta.db_table)

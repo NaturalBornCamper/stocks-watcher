@@ -1,8 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from requests import Response
 
-from watcher.constants import CURRENCY_CAD
+from constants import CURRENCY_CAD
 from watcher.models import Stock
 
 

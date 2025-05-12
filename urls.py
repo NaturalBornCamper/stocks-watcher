@@ -14,12 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
-
-from watcher.views import cron
+from django.contrib import admin
+from django.urls import path, include
 
 urlpatterns = [
-    # Cronjobs
-    path("cron/fetch_prices/", cron.fetch_prices, name="cron.fetch_prices"),
-    path("cron/send_alerts/", cron.send_alerts, name="cron.send_alerts"),
+    path("admin/", admin.site.urls),
+    path("", include("watcher.urls")),
+    path("quant/", include("quant.urls")),
+
 ]
