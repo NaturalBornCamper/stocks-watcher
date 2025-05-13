@@ -1,27 +1,28 @@
 import csv
 import pathlib
+from collections import defaultdict
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
 from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
 
-
+# SEEKING ALPHA RATING DUMPS MANIPULATIONS
 # Executes these 3 steps:
-#  1-Recursively reads all quant dump csv files from an input folder
+#  1-Recursively reads all SA rating csv dump files from an input folder
 #  2-Aggregates them into a single dictionary
-#  3-Splits the generated quant data dump dictionary into the different csv files, as requested
+#  3-Splits the generated rating data dictionary into the different csv files, as requested
 # Example usage:
-# python manage.py quant_manipulations <function> /path/to/your/csv_dump_folder /path/to/your/output_folder <asc|desc>
-# python manage.py quant_manipulations by_date_then_type "Quant Dumps/" organized_quant
-# python manage.py quant_manipulations by_type_then_date "Quant Dumps/" organized_quant
-# python manage.py quant_manipulations one_csv_per_date "Quant Dumps/" organized_quant asc
-# python manage.py quant_manipulations one_csv_per_type "Quant Dumps/" organized_quant desc
+# python manage.py sa_ratings_manipulations <function> /path/to/your/csv_dump_folder /path/to/your/output_folder <asc|desc>
+# python manage.py sa_ratings_manipulations by_date_then_type "SA Rating Dumps/" organized_quant
+# python manage.py sa_ratings_manipulations by_type_then_date "SA Rating Dumps/" organized_quant
+# python manage.py sa_ratings_manipulations one_csv_per_date "SA Rating Dumps/" organized_quant asc
+# python manage.py sa_ratings_manipulations one_csv_per_type "SA Rating Dumps/" organized_quant desc
 # I usually use this one:
-#  python manage.py quant_manipulations one_csv_per_date "organized_quant/" organized_quant
+#  python manage.py sa_ratings_manipulations one_csv_per_date "data_dumps/seeking_alpha/" "data_dumps/seeking_alpha/"
 
 
-# Recursively reads all quant dump csv files in a folder and aggregates them into a single dictionary
+# Recursively reads all SA rating csv dump files in a folder and aggregates them into a single dictionary
 def aggregate_csv_quant_files(input_folder: str, first_key: str, second_key: str = None) -> dict:
     csv_filepaths = pathlib.Path(input_folder).rglob("*.csv")
     quant_dict = {}
@@ -60,7 +61,7 @@ def aggregate_csv_quant_files(input_folder: str, first_key: str, second_key: str
 
 # Writes a list of lines to a csv file, sorting them if necessary
 def write_lines_to_csv_file(lines: list[dict[str, str]], output_file: str, sort_order: str) -> None:
-    # Sort quant list by their date (asc or desc), then type, then rank
+    # Sort ratings list by their date (asc or desc), then type, then rank
     # date sorting has no effect on multi-levels export (since a folder per date, or a file per date)
     if sort_order:
         lines.sort(key=lambda x: (
@@ -76,7 +77,7 @@ def write_lines_to_csv_file(lines: list[dict[str, str]], output_file: str, sort_
             dict_writer.writerow(line)
 
 
-# Splits the generated quant data dump dictionary into the different csv files
+# Splits the generated rating data dictionary into the different csv files
 def process_quant_for_output(quant_dict: dict, output_folder: str, sort_order: str) -> None:
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
 
@@ -93,7 +94,7 @@ def process_quant_for_output(quant_dict: dict, output_folder: str, sort_order: s
 
 class Command(BaseCommand):
     quant_headers = []
-    help = "To recursively read all quant dump csv files in a folder then reorganize them as requested"
+    help = "To recursively read all Seeking Alpha rating csv dump files in a folder then reorganize them as requested"
 
     def add_arguments(self, parser):
         parser.add_argument("command", type=str, help="Command to run")
@@ -114,5 +115,5 @@ class Command(BaseCommand):
             print("Unknown command")
             return
 
-        # Export all quant data to csv files, organized according to the dictionary structure
+        # Export all rating data to csv files, organized according to the dictionary structure
         process_quant_for_output(quant_dict, options["output_folder"], options["sort_order"])

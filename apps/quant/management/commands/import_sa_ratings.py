@@ -8,9 +8,9 @@ from django.core.management.base import BaseCommand
 from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
 from apps.quant.models import SAStock, SARating
 
-# python manage.py import_quant /path/to/your/csv_file.csv
-# python manage.py import_quant "Quant Dumps/2025-02.csv"
-# python manage.py import_quant "organized_quant/2025-02-01.csv"
+# python manage.py import_sa_ratings /path/to/your/csv_file.csv
+# python manage.py import_sa_ratings "SA Rating Dumps/2025-02-01.csv"
+# python manage.py import_sa_ratings "data_dumps/seeking_alpha/2025-05-01.csv"
 
 
 EXCLUSION_LIST = [
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 quant_list = []
                 error = False
                 for row in csv_reader:
-                    quant = SARating()
+                    sa_rating = SARating()
 
                     # Convert row to use standardized column names
                     new_row = {}
@@ -88,47 +88,47 @@ class Command(BaseCommand):
                         new_row[col_name] = find_matching_value(row, possible_names)
 
                     # If no date in column, use current date
-                    quant.sa_stock, created = SAStock.objects.get_or_create(
+                    sa_rating.sa_stock, created = SAStock.objects.get_or_create(
                         symbol=new_row[Columns.SEEKINGALPHA_SYMBOL],
                         defaults={"name": new_row[Columns.COMPANY_NAME]}
                     )
-                    quant.date = new_row[Columns.DATE] if new_row[Columns.DATE] else datetime.today()
-                    quant.type = new_row[Columns.TYPE]
-                    quant.rank = new_row[Columns.RANK]
-                    quant.quant = clean(new_row[Columns.QUANT])
-                    quant.rating_seeking_alpha = clean(new_row[Columns.RATING_SEEKING_ALPHA])
-                    quant.rating_wall_street = clean(new_row[Columns.RATING_WALL_STREET])
-                    quant.market_cap_millions = convert_market_cap_to_millions(
+                    sa_rating.date = new_row[Columns.DATE] if new_row[Columns.DATE] else datetime.today()
+                    sa_rating.type = new_row[Columns.TYPE]
+                    sa_rating.rank = new_row[Columns.RANK]
+                    sa_rating.quant = clean(new_row[Columns.QUANT])
+                    sa_rating.rating_seeking_alpha = clean(new_row[Columns.RATING_SEEKING_ALPHA])
+                    sa_rating.rating_wall_street = clean(new_row[Columns.RATING_WALL_STREET])
+                    sa_rating.market_cap_millions = convert_market_cap_to_millions(
                         new_row[Columns.MARKET_CAP_MILLIONS], new_row[Columns.SEEKINGALPHA_SYMBOL]
                     )
-                    quant.dividend_yield = clean(new_row[Columns.DIVIDEND_YIELD])
-                    quant.valuation = new_row[Columns.VALUATION]
-                    quant.profitability = new_row[Columns.PROFITABILITY]
-                    quant.growth = new_row[Columns.GROWTH]
-                    quant.momentum = new_row[Columns.MOMENTUM]
-                    quant.eps_revision = new_row[Columns.EPS_REVISION]
+                    sa_rating.dividend_yield = clean(new_row[Columns.DIVIDEND_YIELD])
+                    sa_rating.valuation = new_row[Columns.VALUATION]
+                    sa_rating.profitability = new_row[Columns.PROFITABILITY]
+                    sa_rating.growth = new_row[Columns.GROWTH]
+                    sa_rating.momentum = new_row[Columns.MOMENTUM]
+                    sa_rating.eps_revision = new_row[Columns.EPS_REVISION]
 
                     if BULK_INSERTION:
-                        quant_list.append(quant)
+                        quant_list.append(sa_rating)
                     else:
                         try:
-                            quant.save()
+                            sa_rating.save()
                         except Exception as e:
                             print("ERROR SAVING QUANT VALUES")
-                            print(quant.date)
-                            print(quant.type)
-                            print(quant.rank)
-                            print(quant.sa_stock.symbol)
-                            print(quant.quant)
-                            print(quant.rating_seeking_alpha)
-                            print(quant.rating_wall_street)
-                            print(quant.market_cap_millions)
-                            print(quant.dividend_yield)
-                            print(quant.valuation)
-                            print(quant.profitability)
-                            print(quant.growth)
-                            print(quant.momentum)
-                            print(quant.eps_revision)
+                            print(sa_rating.date)
+                            print(sa_rating.type)
+                            print(sa_rating.rank)
+                            print(sa_rating.sa_stock.symbol)
+                            print(sa_rating.quant)
+                            print(sa_rating.rating_seeking_alpha)
+                            print(sa_rating.rating_wall_street)
+                            print(sa_rating.market_cap_millions)
+                            print(sa_rating.dividend_yield)
+                            print(sa_rating.valuation)
+                            print(sa_rating.profitability)
+                            print(sa_rating.growth)
+                            print(sa_rating.momentum)
+                            print(sa_rating.eps_revision)
                             print(e)
                             traceback.print_exc()
                             error = True
