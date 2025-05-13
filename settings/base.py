@@ -29,8 +29,8 @@ SECRET_KEY = getenv("DJANGO_SECRET_KEY", "django-insecure-dev-key")
 # Application definition
 
 INSTALLED_APPS = [
-    "watcher",
-    "quant",
+    "apps.watcher",
+    "apps.quant",
 
     "django.contrib.admin",
     "django.contrib.auth",
@@ -57,6 +57,7 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
             BASE_DIR / "watcher/templates",
+            BASE_DIR / "quant/templates",
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -107,7 +108,7 @@ USE_TZ = True
 STATIC_URL = "/public/"
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
-    BASE_DIR / 'watcher/static',
+    BASE_DIR / 'apps/watcher/static',
 ]
 
 # Default primary key field type

@@ -19,8 +19,8 @@
       <excludeFolder url="file://$MODULE_DIR$/Quant Dumps" />
       <excludeFolder url="file://$MODULE_DIR$/Zacks Ranks" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
-      <excludeFolder url="file://$MODULE_DIR$/quant/migrations" />
-      <excludeFolder url="file://$MODULE_DIR$/watcher/migrations" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/quant/migrations" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/watcher/migrations" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.12 (Stocks Watcher)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
