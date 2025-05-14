@@ -52,11 +52,11 @@ class StockAdmin(admin.ModelAdmin):
         messages.success(request, "Prices deleted")
         return redirect(request.get_full_path())
 
-    # Adds a link to the Quant details page of a specific stock
-    def quant_stock_link(self, stock: Stock) -> str:
+    # Adds a link to the Seeking Alpha ratings details page of a specific stock
+    def sa_stock_link(self, stock: Stock) -> str:
         if stock.sa_stock and stock.sa_stock.symbol:
-            url = reverse("quant.stock", args=[stock.sa_stock.symbol])
-            return mark_safe(f"<a href=\"{url}\" target=\"quant_{stock.sa_stock.symbol}\">View Quant</a>")
+            url = reverse("quant.sa.stock", args=[stock.sa_stock.symbol])
+            return mark_safe(f"<a href=\"{url}\" target=\"quant_{stock.sa_stock.symbol}\">View Ratings</a>")
         return "-"
 
     # Adds a rollover (i) icon that displays game notes
@@ -82,7 +82,7 @@ class StockAdmin(admin.ModelAdmin):
         return stock.alerts.count()
 
     # Columns to display
-    list_display = ["symbol", "quant_stock_link", "name", "notes_hint", "market", "currency",
+    list_display = ["symbol", "sa_stock_link", "name", "notes_hint", "market", "currency",
                     "dividend_yield_display", "prices_count", "alerts_count"]
 
     # Quick actions
@@ -99,14 +99,14 @@ class StockAdmin(admin.ModelAdmin):
 
     # Custom descriptions for columns
     notes_hint.short_description = "Notes"
-    quant_stock_link.short_description = "Quant"
+    sa_stock_link.short_description = "Seeking Alpha stock"
     dividend_yield_display.short_description = "Dividend yield"
     prices_count.short_description = "Prices count"
     alerts_count.short_description = "Alerts count"
 
     # Model fields to use for custom columns ordering
     notes_hint.admin_order_field = "notes"
-    quant_stock_link.admin_order_field = "sa_stock"
+    sa_stock_link.admin_order_field = "sa_stock"
     dividend_yield_display.admin_order_field = "dividend_yield"
     prices_count.admin_order_field = "prices_count"
     alerts_count.admin_order_field = "alerts_count"

@@ -77,7 +77,7 @@ class Command(BaseCommand):
             with open(csv_file, 'r') as file:
                 csv_reader = csv.DictReader(file)
 
-                quant_list = []
+                sa_ratings_list = []
                 error = False
                 for row in csv_reader:
                     sa_rating = SARating()
@@ -109,12 +109,12 @@ class Command(BaseCommand):
                     sa_rating.eps_revision = new_row[Columns.EPS_REVISION]
 
                     if BULK_INSERTION:
-                        quant_list.append(sa_rating)
+                        sa_ratings_list.append(sa_rating)
                     else:
                         try:
                             sa_rating.save()
                         except Exception as e:
-                            print("ERROR SAVING QUANT VALUES")
+                            print("ERROR SAVING SEEKING ALPHA RATINGS")
                             print(sa_rating.date)
                             print(sa_rating.type)
                             print(sa_rating.rank)
@@ -134,7 +134,7 @@ class Command(BaseCommand):
                             error = True
 
                 if BULK_INSERTION:
-                    SARating.objects.bulk_create(quant_list, ignore_conflicts=True)
+                    SARating.objects.bulk_create(sa_ratings_list, ignore_conflicts=True)
 
                 if not error:
                     self.stdout.write(self.style.SUCCESS("Data imported successfully."))

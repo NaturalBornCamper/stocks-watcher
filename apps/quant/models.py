@@ -71,19 +71,19 @@ class SARating(models.Model):
 
     @staticmethod
     def get_type_tuple(type_key: str) -> tuple:
-        for quant_type_tuple in SARating.TYPES:
-            if type_key == quant_type_tuple[0]:
-                return quant_type_tuple
+        for sa_rating_type_tuple in SARating.TYPES:
+            if type_key == sa_rating_type_tuple[0]:
+                return sa_rating_type_tuple
 
         return SARating.TYPES[0]
 
     @staticmethod
     def get_type_display(key: str) -> str:
-        for quant_type_tuple in SARating.TYPES:
-            if key == quant_type_tuple[0]:
-                return quant_type_tuple[1]
+        for sa_rating_type_tuple in SARating.TYPES:
+            if key == sa_rating_type_tuple[0]:
+                return sa_rating_type_tuple[1]
 
-        raise Exception(f"Invalid Quant type requested: {key}")
+        raise Exception(f"Invalid Seeking Alpha rating type requested: {key}")
 
 
 class CompiledSAScoreBase(models.Model):
@@ -91,7 +91,7 @@ class CompiledSAScoreBase(models.Model):
     type = models.CharField(max_length=255, choices=SARating.TYPES, blank=False)
     score = models.PositiveSmallIntegerField(default=0)
     count = models.PositiveSmallIntegerField(default=0)
-    latest_quant_date = models.DateField(verbose_name="Date of the latest quant dump used for compilation")
+    latest_sa_ratings_date = models.DateField(verbose_name="Date of the latest Seeking Alpha ratings dump used for compilation")
 
     class Meta:
         abstract = True

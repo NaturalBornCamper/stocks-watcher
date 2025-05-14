@@ -110,46 +110,6 @@ class SeekingAlphaRatingsAggregator:
                 dict_writer.writerow(line)
 
 
-# def aggregate_csv_quant_files(input_folder: str, main_group: str, sub_group: str = None) -> dict:
-#     # Build the required columns list and the result dictionary, depending on the number of grouping levels
-#     if sub_group is None:
-#         required_columns = [main_group, Columns.DATE, Columns.TYPE, Columns.RANK]
-#         # Two-level structure: result["main_group"]["third_key"] = {"csv_column1": "value1", ...}
-#         result = defaultdict(dict)
-#     else:
-#         required_columns = [main_group, sub_group, Columns.DATE, Columns.TYPE, Columns.RANK]
-#         # Three-level structure: result["main_group"]["sub_group"]["third_key"] = {"csv_column1": "value1", ...}
-#         result = defaultdict(lambda: defaultdict(dict))
-#
-#     for csv_filepath in pathlib.Path(input_folder).rglob("*.csv"):
-#         with csv_filepath.open("r") as f:
-#             dict_reader = csv.DictReader(f)
-#
-#             for row in dict_reader:
-#                 # If a required column is missing, skip the row
-#                 if missing_columns := [col for col in required_columns if col not in row]:
-#                     print(f"Missing columns: {missing_columns}, skipping row")
-#                     continue
-#
-#                 # Convert old column names to new column names
-#                 new_row = {}
-#                 for col_name, possible_names in COLUMN_NAME_VARIANTS.items():
-#                     new_row[col_name] = find_matching_value(row, possible_names)
-#
-#                 # Generate the keys for the result dictionary
-#                 main_group_value = new_row.get(main_group, None)
-#                 sub_group_value = new_row.get(sub_group, None)
-#                 row_key = new_row[Columns.DATE] + "_" + new_row[Columns.TYPE] + "_" + new_row[Columns.RANK]
-#
-#                 # Add the new row to the result dictionary
-#                 if sub_group is not None:
-#                     result[main_group_value][sub_group_value][row_key] = new_row
-#                 else:
-#                     result[main_group_value][row_key] = new_row
-#
-#     return result
-
-
 class Command(BaseCommand):
     help = "To recursively read all Seeking Alpha rating csv dump files in a folder then reorganize them as requested"
 

@@ -21,15 +21,15 @@ from apps.quant.views.score import stock, score_or_count, historical
 
 urlpatterns = [
     # Cronjobs
-    path("cron/compile_quant/", cron.compile_quant, name="cron.compile_quant"),
-    path("cron/compile_quant_decay/", cron.compile_quant_decay, name="cron.compile_quant_decay"),
+    path("cron/compile_sa_score/", cron.compile_sa_score, name="cron.sa.compile_sa_score"),
+    path("cron/compile_sa_score_decayed/", cron.compile_sa_score_decayed, name="cron.sa.compile_sa_score_decayed"),
 
-    # Quant
-    path("", score_or_count, {"value_to_display": "score"}, name="quant"),
-    path("score", score_or_count, {"value_to_display": "score"}, name="quant.score"),
-    path("score_decay", score_or_count, {"value_to_display": "score_decay"}, name="quant.score_decay"),
-    path("count", score_or_count, {"value_to_display": "count"}, name="quant.count"),
-    path("historical/<str:type>", historical, name="quant.historical"),
-    path("historical/<str:type>/<str:date>", historical, name="quant.historical_date"),
-    path("stock/<str:sa_stock>", stock, name="quant.stock"),
+    # Seeking Alpha Ratings
+    path("sa", score_or_count, {"value_to_display": "score"}, name="quant.sa"),
+    path("sa/score", score_or_count, {"value_to_display": "score"}, name="quant.sa.score"),
+    path("sa/score_decay", score_or_count, {"value_to_display": "score_decay"}, name="quant.sa.score_decay"),
+    path("sa/count", score_or_count, {"value_to_display": "count"}, name="quant.sa.count"),
+    path("sa/historical/<str:type>", historical, name="quant.sa.historical"),
+    path("sa/historical/<str:type>/<str:date>", historical, name="quant.sa.historical_date"),
+    path("sa/stock/<str:sa_stock>", stock, name="quant.sa.stock"),
 ]

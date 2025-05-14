@@ -6,7 +6,7 @@ from pyrotools.log import Log
 
 from apps.quant.models import SARating, CompiledSAScore, SAStock, CompiledSAScoreDecayed
 
-MAX_QUANT_TYPES_PER_RUN = 5
+MAX_SA_RATING_TYPES_PER_RUN = 5
 DECAY_FACTOR = 0.05
 
 
@@ -32,9 +32,9 @@ def rewind_months(from_date: date, months_to_rewind) -> date:
     return date(adjusted_year, adjusted_month, 1)
 
 
-def compile_quant(request):
+def compile_sa_score(request):
     Log.d("TODO replace all prints with logging")
-    max_quant_types = int(request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN))
+    max_quant_types = int(request.GET.get("limit", MAX_SA_RATING_TYPES_PER_RUN))
 
     # Get the date of the latest quant data from Seeking Alpha dumps
     latest_quant_dump_date = SARating.objects.aggregate(latest_date=Max('date'))['latest_date']
@@ -87,8 +87,8 @@ def compile_quant(request):
     return HttpResponse(f"Compiled {len(types_to_update)} quant types")
 
 
-def compile_quant_decay(request):
-    max_quant_types = int(request.GET.get("limit", MAX_QUANT_TYPES_PER_RUN))
+def compile_sa_score_decayed(request):
+    max_quant_types = int(request.GET.get("limit", MAX_SA_RATING_TYPES_PER_RUN))
     decay_months = int(request.GET.get("decay_months", CompiledSAScoreDecayed.DECAY_MONTHS))
     print(f"Max decay distance: {decay_months}")
 

@@ -21,6 +21,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/apps/quant/migrations" />
       <excludeFolder url="file://$MODULE_DIR$/apps/watcher/migrations" />
+      <excludeFolder url="file://$MODULE_DIR$/data_dumps" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.12 (Stocks Watcher)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

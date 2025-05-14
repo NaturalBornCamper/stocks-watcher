@@ -19,7 +19,7 @@ class SARatingAdmin(admin.ModelAdmin):
 
 
 class CompiledSAScoreAdmin(admin.ModelAdmin):
-    list_display = ["sa_stock__symbol", "sa_stock__name", "score", "count", "type", "latest_quant_date"]
+    list_display = ["sa_stock__symbol", "sa_stock__name", "score", "count", "type", "latest_sa_ratings_date"]
     list_filter = ["type"]
     search_fields = ["sa_stock__symbol", "sa_stock__name", "type"]
 

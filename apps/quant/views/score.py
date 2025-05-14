@@ -27,22 +27,23 @@ for slug, name in SARating.TYPES.items():
 
 # Displays a grid of either:
 #  - score = Score for each stock, calculated from their rank each month (the higher the rank, the higher the score)
-#  - count = Number of times each stock was in the quant
+#  - count = Number of times each stock was in the sa rating
 def score_or_count(request, value_to_display="score"):
     quant_list = {}
-    quant_model = CompiledSAScoreDecayed if value_to_display == "score_decay" else CompiledSAScore
+    sa_model = CompiledSAScoreDecayed if value_to_display == "score_decay" else CompiledSAScore
 
-    for compiled_quant_stock_type in quant_model.objects.all():
-        if compiled_quant_stock_type.sa_stock.symbol not in quant_list:
-            quant_list[compiled_quant_stock_type.sa_stock.symbol] = {
-                "name": compiled_quant_stock_type.sa_stock.name,
+    for compiled_sa_stock_type in sa_model.objects.all():
+        # TODO replace statement with defaultdict instead of checking if the key exists to make it easier to read
+        if compiled_sa_stock_type.sa_stock.symbol not in quant_list:
+            quant_list[compiled_sa_stock_type.sa_stock.symbol] = {
+                "name": compiled_sa_stock_type.sa_stock.name,
                 "types": copy.deepcopy(DEFAULT_STOCK_DICT)
             }
 
-        quant_list[compiled_quant_stock_type.sa_stock.symbol]["types"][compiled_quant_stock_type.type] = {
+        quant_list[compiled_sa_stock_type.sa_stock.symbol]["types"][compiled_sa_stock_type.type] = {
             # "company": compiled_quant_stock_type.score,
-            "score": compiled_quant_stock_type.score,
-            "count": compiled_quant_stock_type.count,
+            "score": compiled_sa_stock_type.score,
+            "count": compiled_sa_stock_type.count,
         }
 
     # pprint(quant_list)
@@ -55,7 +56,7 @@ def score_or_count(request, value_to_display="score"):
     return HttpResponse(template.render(context, request))
 
 
-# TODO See specific quant category for a specific month (just like on Seeking Alpha) [/quant/historical/<type>/<date>]
+# TODO See specific SA rating category for a specific month (just like on Seeking Alpha) [/sa/historical/<type>/<date>]
 # TODO Get distinct dates from DB and create menu on top to avoid having to write manually in URL bar
 def historical(request, type: str, date: str = None):
     pass
