@@ -36,18 +36,18 @@ def compile_sa_score(request):
     Log.d("TODO replace all prints with logging")
     max_quant_types = int(request.GET.get("limit", MAX_SA_RATING_TYPES_PER_RUN))
 
-    # Get the date of the latest quant data from Seeking Alpha dumps
+    # Get the date of the latest Seeking Alpha ratings data dumps
     latest_quant_dump_date = SARating.objects.aggregate(latest_date=Max('date'))['latest_date']
-    print(f"Latest quant dump: {latest_quant_dump_date}")
+    print(f"Latest Seeking Alpha ratings date: {latest_quant_dump_date}")
     if not latest_quant_dump_date:
-        return HttpResponse("No quant data found")
+        return HttpResponse("No ratings data found")
 
-    # Get quant types that have not been compiled yet (compilation date smaller than quant date)
+    # Get scores types that have not been compiled yet (compilation date earlier than latest ratings date)
     types_to_update = []
     for quant_type in SARating.TYPES.keys():
-        # Exclude this quant type if it already has a compilation date greater than the latest date
-        if CompiledSAScore.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
-            print(f"Quant type already compiled: {quant_type}")
+        # Exclude this score type if it already has a compilation date later than the latest sa ratings date
+        if CompiledSAScore.objects.filter(latest_sa_ratings_date__gte=latest_quant_dump_date, type=quant_type).exists():
+            print(f"Ratings type already compiled: {quant_type}")
             continue
 
         # Don't fetch more types to compile than the max requested
@@ -55,7 +55,7 @@ def compile_sa_score(request):
             break
         types_to_update.append(quant_type)
 
-    # For each quant type, get ALL the quant rows and compile the score
+    # For each SA score type, get ALL the rating rows and compile the score
     for current_type in types_to_update:
         compiled_type = (
             SARating.objects
@@ -72,19 +72,19 @@ def compile_sa_score(request):
                 type=entry["type"],
                 score=entry["score"],
                 count=entry["count"],
-                latest_quant_date=latest_quant_dump_date
+                latest_sa_ratings_date=latest_quant_dump_date
             ))
 
         # Update the Compiled Quant table (New stock symbols will be added, existing symbols will be updated)
         CompiledSAScore.objects.bulk_create(
             compiled_type_instances,
             update_conflicts=True,
-            update_fields=["count", "score", "latest_quant_date"],
+            update_fields=["count", "score", "latest_sa_ratings_date"],
             unique_fields=["sa_stock", "type"],  # Fields to match existing rows that need to updating
         )
         print(f"Compiled type: {SARating.TYPES[current_type]} ({compiled_type.count()} stock symbols)")
 
-    return HttpResponse(f"Compiled {len(types_to_update)} quant types")
+    return HttpResponse(f"Compiled {len(types_to_update)} Seeking Alpha score types")
 
 
 def compile_sa_score_decayed(request):
@@ -99,17 +99,17 @@ def compile_sa_score_decayed(request):
     print(f"Decay factors: {decay_factors}")
 
     latest_quant_dump_date = SARating.objects.aggregate(latest_date=Max('date'))['latest_date']
+    print(f"Latest Seeking Alpha ratings date: {latest_quant_dump_date}")
     if not latest_quant_dump_date:
-        return HttpResponse("No quant data found")
-    print(f"Latest quant dump: {latest_quant_dump_date}")
+        return HttpResponse("No ratings data found")
 
     earliest_quant_date = rewind_months(latest_quant_dump_date, decay_months - 1)
 
     # Build array of quant types to compile
     types_to_update = []
     for quant_type in SARating.TYPES.keys():
-        if CompiledSAScoreDecayed.objects.filter(latest_quant_date__gte=latest_quant_dump_date, type=quant_type).exists():
-            print(f"Quant type already compiled: {quant_type}")
+        if CompiledSAScoreDecayed.objects.filter(latest_sa_ratings_date__gte=latest_quant_dump_date, type=quant_type).exists():
+            print(f"Score type already compiled: {quant_type}")
             continue
         if len(types_to_update) >= max_quant_types:
             break
@@ -117,30 +117,30 @@ def compile_sa_score_decayed(request):
 
     compiled_quants_with_decay = {}
     for current_type in types_to_update:
-        print(f"Processing quant type: {SARating.TYPES[current_type]}")
+        print(f"Processing ratings of type: {SARating.TYPES[current_type]}")
 
         # Clear old values
         CompiledSAScoreDecayed.objects.filter(type=current_type).delete()
 
-        # Get all quant data with given type and date > maximum months back
-        for quant in (SARating.objects.filter(type=current_type, date__gte=earliest_quant_date).order_by("date")):
-            decay_factor = decay_factors[get_distance_in_months(quant.date, latest_quant_dump_date)]
+        # Get all SA ratings data with given type & date > maximum months back
+        for rating in (SARating.objects.filter(type=current_type, date__gte=earliest_quant_date).order_by("date")):
+            decay_factor = decay_factors[get_distance_in_months(rating.date, latest_quant_dump_date)]
 
             # Add sa_stock to the dictionary if it doesn't exist yet
-            if quant.sa_stock not in compiled_quants_with_decay:
-                compiled_quants_with_decay[quant.sa_stock] = CompiledSAScoreDecayed(
-                    sa_stock=quant.sa_stock,
+            if rating.sa_stock not in compiled_quants_with_decay:
+                compiled_quants_with_decay[rating.sa_stock] = CompiledSAScoreDecayed(
+                    sa_stock=rating.sa_stock,
                     type=current_type,
                     score=0,
                     count=0,
-                    latest_quant_date=latest_quant_dump_date
+                    latest_sa_ratings_date=latest_quant_dump_date
                 )
 
             # Calculate the new decayed score and append values for debug
-            compiled_quants_with_decay[quant.sa_stock].count += 1
-            compiled_quants_with_decay[quant.sa_stock].score += int((101 - quant.rank) * decay_factor)
+            compiled_quants_with_decay[rating.sa_stock].count += 1
+            compiled_quants_with_decay[rating.sa_stock].score += int((101 - rating.rank) * decay_factor)
 
     if compiled_quants_with_decay:
         CompiledSAScoreDecayed.objects.bulk_create(compiled_quants_with_decay.values())
 
-    return HttpResponse(f"Compiled {len(types_to_update)} quant types")
+    return HttpResponse(f"Compiled {len(types_to_update)} Seeking Alpha score types")

@@ -110,6 +110,7 @@ class CompiledSAScoreDecayed(CompiledSAScoreBase):
 
     class Meta:
         db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_decay"
+        verbose_name_plural = "Compiled sa scores decayed"
         constraints = [
             UniqueConstraint(name="quant__compiled_score_decayed__unique__sa_stock__type", fields=["sa_stock", "type"])
         ]

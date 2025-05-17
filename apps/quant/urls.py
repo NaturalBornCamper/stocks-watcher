@@ -27,7 +27,7 @@ urlpatterns = [
     # Seeking Alpha Ratings
     path("sa", score_or_count, {"value_to_display": "score"}, name="quant.sa"),
     path("sa/score", score_or_count, {"value_to_display": "score"}, name="quant.sa.score"),
-    path("sa/score_decay", score_or_count, {"value_to_display": "score_decay"}, name="quant.sa.score_decay"),
+    path("sa/score_decayed", score_or_count, {"value_to_display": "score_decay"}, name="quant.sa.score_decay"),
     path("sa/count", score_or_count, {"value_to_display": "count"}, name="quant.sa.count"),
     path("sa/historical/<str:type>", historical, name="quant.sa.historical"),
     path("sa/historical/<str:type>/<str:date>", historical, name="quant.sa.historical_date"),
