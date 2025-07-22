@@ -99,7 +99,7 @@ def compile_sa_score_decayed(request):
     # Builds the decay factor list of length (max_decay_distance + 1). For example:
     # max_decay_distance 3 => [1.0, 0.75, 0.5, 0.25]
     # max_decay_distance 1 => [1.0, 0.5]
-    decay_factors = [1.0 - (i / (decay_months)) for i in range(decay_months)]
+    decay_factors = [1.0 - (i / decay_months) for i in range(decay_months)]
     print(f"Decay factors: {decay_factors}")
 
     latest_quant_dump_date = SARating.objects.aggregate(latest_date=Max('date'))['latest_date']
@@ -119,13 +119,13 @@ def compile_sa_score_decayed(request):
             break
         types_to_update.append(quant_type)
 
-    compiled_quants_with_decay = {}
     for current_type in types_to_update:
         print(f"Processing ratings of type: {SARating.TYPES[current_type]}")
 
         # Clear old values
         CompiledSAScoreDecayed.objects.filter(type=current_type).delete()
 
+        compiled_quants_with_decay = {}
         # Get all SA ratings data with given type & date > maximum months back
         for rating in (SARating.objects.filter(type=current_type, date__gte=earliest_quant_date).order_by("date")):
             decay_factor = decay_factors[get_distance_in_months(rating.date, latest_quant_dump_date)]
@@ -140,12 +140,12 @@ def compile_sa_score_decayed(request):
                     latest_sa_ratings_date=latest_quant_dump_date
                 )
 
-            # Calculate the new decayed score and append values for debug
+            # Calculate the new decayed score and append values
             compiled_quants_with_decay[rating.sa_stock].count += 1
             compiled_quants_with_decay[rating.sa_stock].score += int((101 - rating.rank) * decay_factor)
 
-    if compiled_quants_with_decay:
-        CompiledSAScoreDecayed.objects.bulk_create(compiled_quants_with_decay.values())
+        if compiled_quants_with_decay:
+            CompiledSAScoreDecayed.objects.bulk_create(compiled_quants_with_decay.values())
 
     return HttpResponse(f"Compiled {len(types_to_update)} Seeking Alpha score types")
 
