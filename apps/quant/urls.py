@@ -23,6 +23,7 @@ urlpatterns = [
     # Cronjobs
     path("cron/compile_sa_score/", cron.compile_sa_score, name="cron.sa.compile_sa_score"),
     path("cron/compile_sa_score_decayed/", cron.compile_sa_score_decayed, name="cron.sa.compile_sa_score_decayed"),
+    path("cron/compile_sa_delta_score/", cron.compile_sa_delta_score, name="cron.sa.compile_sa_delta_score"),
 
     # Seeking Alpha Ratings
     path("sa", score_or_count, {"value_to_display": "score"}, name="quant.sa"),

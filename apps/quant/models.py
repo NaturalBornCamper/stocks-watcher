@@ -89,15 +89,34 @@ class SARating(models.Model):
 class CompiledSAScoreBase(models.Model):
     sa_stock = models.ForeignKey(SAStock, on_delete=models.CASCADE, db_index=True)
     type = models.CharField(max_length=255, choices=SARating.TYPES, blank=False)
-    score = models.PositiveSmallIntegerField(default=0)
     count = models.PositiveSmallIntegerField(default=0)
-    latest_sa_ratings_date = models.DateField(verbose_name="Date of the latest Seeking Alpha ratings dump used for compilation")
+    latest_sa_ratings_date = models.DateField(
+        verbose_name="Date of the latest Seeking Alpha ratings dump used for compilation")
 
     class Meta:
         abstract = True
 
 
-class CompiledSAScore(CompiledSAScoreBase):
+class RankScoreBase(CompiledSAScoreBase):
+    score = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        abstract = True
+
+
+class DeltaScoreBase(CompiledSAScoreBase):
+    SAMPLE_MONTH_COUNT = 5
+
+    combined_score = models.DecimalField(max_digits=4, decimal_places=2)
+    slope_score = models.DecimalField(max_digits=4, decimal_places=2)
+    rank_score = models.DecimalField(max_digits=4, decimal_places=2)
+    ranks = models.JSONField(default=list)
+
+    class Meta:
+        abstract = True
+
+
+class CompiledSAScore(RankScoreBase):
     class Meta:
         db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_regular"
         constraints = [
@@ -105,12 +124,28 @@ class CompiledSAScore(CompiledSAScoreBase):
         ]
 
 
-class CompiledSAScoreDecayed(CompiledSAScoreBase):
+class CompiledSAScoreDecayed(RankScoreBase):
     DECAY_MONTHS = 3
 
     class Meta:
-        db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_decay"
+        db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_decayed"
         verbose_name_plural = "Compiled sa scores decayed"
         constraints = [
             UniqueConstraint(name="quant__compiled_score_decayed__unique__sa_stock__type", fields=["sa_stock", "type"])
+        ]
+
+
+class CompiledSADeltaScore(DeltaScoreBase):
+    class Meta:
+        db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_delta_regular"
+        constraints = [
+            UniqueConstraint(name="quant__compiled_delta__unique__sa_stock__type", fields=["sa_stock", "type"])
+        ]
+
+
+class CompiledSADeltaScoreDecayed(DeltaScoreBase):
+    class Meta:
+        db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_delta_decayed"
+        constraints = [
+            UniqueConstraint(name="quant__compiled_delta_decayed__unique__sa_stock__type", fields=["sa_stock", "type"])
         ]
