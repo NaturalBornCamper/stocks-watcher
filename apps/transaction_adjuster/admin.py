@@ -55,7 +55,7 @@ class StockTransactionAdmin(admin.ModelAdmin):
     search_fields = ["date", "symbol", "notes"]
 
     # Side filters
-    list_filter = ["symbol", "currency", DuplicateTransactionFilter]
+    list_filter = ["symbol", "currency", "type", DuplicateTransactionFilter]
 
     # Custom descriptions for columns
     notes_hint.short_description = "Notes"

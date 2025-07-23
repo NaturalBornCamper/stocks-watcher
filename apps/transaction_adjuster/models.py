@@ -3,7 +3,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from decimal import Decimal
-from constants import CURRENCY_CAD, CURRENCY_USD
+from constants import CURRENCY_CAD, CURRENCY_USD, TRANSACTION_BUY, TRANSACTION_SELL
 
 
 def update_adjusted_values_for_symbol(symbol: str):
@@ -26,6 +26,11 @@ class StockTransaction(models.Model):
         (CURRENCY_CAD, 'CAD'),
     ]
     
+    TRANSACTION_TYPE_CHOICES = [
+        (TRANSACTION_BUY, 'Buy'),
+        (TRANSACTION_SELL, 'Sell'),
+    ]
+    
     date = models.DateField()
     symbol = models.CharField(max_length=10)
     quantity = models.IntegerField()
@@ -35,6 +40,7 @@ class StockTransaction(models.Model):
     total_cost = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
     notes = models.TextField(blank=True)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default=CURRENCY_USD)
+    type = models.CharField(max_length=4, choices=TRANSACTION_TYPE_CHOICES, default=TRANSACTION_BUY)
 
     def clean(self):
         """Ensure at least one of price_per_share or total_cost is provided."""
