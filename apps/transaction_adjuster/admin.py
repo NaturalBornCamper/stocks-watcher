@@ -1,40 +1,69 @@
 import re
 
+from django import forms
 from django.contrib import admin
+from django.db import models
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.db.models import Count, Q
 
+from apps.transaction_adjuster.admin_filters import DuplicateTransactionFilter, TransactionYearFilter
 from apps.transaction_adjuster.models import StockTransaction, StockSplit
+from utils.helpers import get_currency_symbol
 
 
-class DuplicateTransactionFilter(admin.SimpleListFilter):
-    title = 'Duplicate Transactions'
-    parameter_name = 'duplicate'
+def format_price(value: float):
+    if value is None:
+        return None
 
-    def lookups(self, request, model_admin):
-        return (
-            ('yes', 'Show Duplicates'),
-        )
+    # Format number with commas for thousands
+    integer_part, decimal_part = f"{value:.10f}".split('.')
+    formatted_integer = f"{int(integer_part):,}"
 
-    def queryset(self, request, queryset):
-        if self.value() == 'yes':
-            # Find transactions with the same symbol, date, and quantity
-            duplicates = StockTransaction.objects.values('symbol', 'date', 'quantity') \
-                .annotate(count=Count('id')) \
-                .filter(count__gt=1)
+    # Remove trailing zeros but keep at least 2
+    decimal_part = decimal_part.rstrip('0')
+    if len(decimal_part) < 2:
+        decimal_part += '0' * (2 - len(decimal_part))
 
-            if duplicates:
-                q_objects = Q()
-                for duplicate in duplicates:
-                    q_objects |= Q(
-                        symbol=duplicate['symbol'],
-                        date=duplicate['date'],
-                        quantity=duplicate['quantity']
-                    )
-                return queryset.filter(q_objects)
-            return queryset.none()
-        return queryset
+    return f"{formatted_integer}.{decimal_part}"
+
+
+class SmartDecimalField(forms.CharField):
+    def to_python(self, value):
+        if value in self.empty_values:
+            return None
+
+        # Handle input format based on presence of comma or period
+        if isinstance(value, str):
+            # If there's a comma and no period, treat as French format
+            if ',' in value and '.' not in value:
+                value = value.replace(',', '.')
+
+        try:
+            return super().to_python(value)
+        except forms.ValidationError:
+            raise forms.ValidationError(
+                "Please enter a valid number. Use either '.' (English) or ',' (French) as decimal separator."
+            )
+
+
+class StockTransactionAdminForm(forms.ModelForm):
+    # Override decimal fields with our custom field
+    price_per_share = SmartDecimalField(
+        required=False,
+        help_text="Use either '.' (English) or ',' (French) as decimal separator"
+    )
+    total_cost = SmartDecimalField(
+        required=False,
+        help_text="Use either '.' (English) or ',' (French) as decimal separator"
+    )
+
+    class Meta:
+        model = StockTransaction
+        fields = ["date", "symbol", "currency", "type", "quantity", "price_per_share", "total_cost", "notes"]
+        widgets = {
+            'currency': forms.RadioSelect(),
+            'type': forms.RadioSelect(),
+        }
 
 
 class StockTransactionAdmin(admin.ModelAdmin):
@@ -47,18 +76,42 @@ class StockTransactionAdmin(admin.ModelAdmin):
         else:
             return ""
 
+    def formatted_price_per_share(self, obj):
+        return f"{format_price(obj.price_per_share)} {get_currency_symbol(obj.currency)}"
+
+    def formatted_adjusted_price_per_share(self, obj):
+        return f"{format_price(obj.adjusted_price_per_share)} {get_currency_symbol(obj.currency)}"
+
+    def formatted_total_cost(self, obj):
+        return f"{format_price(obj.total_cost)} {get_currency_symbol(obj.currency)}"
+
+    # Makes textareas smaller (For notes)
+    formfield_overrides = {
+        # For TextField
+        models.TextField: {'widget': forms.Textarea(attrs={'rows': 4, 'cols': 120})},
+    }
+
+    form = StockTransactionAdminForm
+
+    # Fields to display in the form
+    # fields = ["date", "symbol", "currency", "type", "quantity", "price_per_share", "total_cost", "notes"]
+
     # Columns to display
-    list_display = ["date", "symbol", "notes_hint", "quantity", "adjusted_quantity", "price_per_share", "adjusted_price_per_share",
-                    "total_cost", "currency"]
+    list_display = ["date", "symbol", "currency", "type", "quantity", "adjusted_quantity",
+                    "formatted_price_per_share", "formatted_adjusted_price_per_share",
+                    "formatted_total_cost", "notes_hint"]
 
     # Fields to search for "All words" (Default search behavior)
     search_fields = ["date", "symbol", "notes"]
 
     # Side filters
-    list_filter = ["symbol", "currency", "type", DuplicateTransactionFilter]
+    list_filter = ["symbol", "currency", "type", TransactionYearFilter, DuplicateTransactionFilter]
 
     # Custom descriptions for columns
     notes_hint.short_description = "Notes"
+    formatted_price_per_share.short_description = "Price Per Share"
+    formatted_adjusted_price_per_share.short_description = "Adjusted Price Per Share"
+    formatted_total_cost.short_description = "Total Cost"
 
     # Model fields to use for custom columns ordering
     notes_hint.admin_order_field = "notes"

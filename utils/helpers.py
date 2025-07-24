@@ -1,6 +1,8 @@
 import os
 from typing import Union
 
+from constants import CURRENCY_USD, CURRENCY_SYMBOL_USD, CURRENCY_CAD, CURRENCY_SYMBOL_CAD
+
 
 def getenv(key: str, default=None) -> Union[str, int, bool]:
     # ENV variable not found in system AND no fallback value was provided
@@ -16,3 +18,12 @@ def getenv(key: str, default=None) -> Union[str, int, bool]:
             return False
 
     return val
+
+
+def get_currency_symbol(currency: str) -> str:
+    if currency == CURRENCY_USD:
+        return CURRENCY_SYMBOL_USD
+    elif currency == CURRENCY_CAD:
+        return CURRENCY_SYMBOL_CAD
+    else:
+        return ""

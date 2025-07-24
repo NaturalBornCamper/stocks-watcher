@@ -2,6 +2,10 @@
 CURRENCY_CAD = "CAD"
 CURRENCY_USD = "USD"
 
+# Currency symbols
+CURRENCY_SYMBOL_CAD = "CA$"
+CURRENCY_SYMBOL_USD = "US$"
+
 # Transaction types
 TRANSACTION_BUY = "buy"
 TRANSACTION_SELL = "sell"
