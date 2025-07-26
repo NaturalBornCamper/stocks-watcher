@@ -7,7 +7,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
-from apps.transaction_adjuster.admin_filters import DuplicateTransactionFilter, TransactionYearFilter
+from apps.transaction_adjuster.admin_filters import CustomFiltersGroup, TransactionYearFilter
 from apps.transaction_adjuster.models import StockTransaction, StockSplit
 from utils.helpers import get_currency_symbol
 
@@ -162,7 +162,7 @@ class StockTransactionAdmin(admin.ModelAdmin):
     search_fields = ["date", "symbol", "notes"]
 
     # Side filters
-    list_filter = ["symbol", "currency", "type", TransactionYearFilter, DuplicateTransactionFilter]
+    list_filter = ["symbol", "currency", "type", TransactionYearFilter, CustomFiltersGroup]
 
     # Custom descriptions for columns
     formatted_date.short_description = "Date"

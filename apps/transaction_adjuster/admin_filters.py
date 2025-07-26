@@ -1,20 +1,21 @@
 from django.contrib import admin
 from django.db.models import Count, Q
 
-from apps.transaction_adjuster.models import StockTransaction
+from apps.transaction_adjuster.models import StockTransaction, StockSplit
 
 
-class DuplicateTransactionFilter(admin.SimpleListFilter):
-    title = 'Duplicate Transactions'
-    parameter_name = 'duplicate'
+class CustomFiltersGroup(admin.SimpleListFilter):
+    title = 'Custom Filters'
+    parameter_name = 'custom_filter'
 
     def lookups(self, request, model_admin):
         return (
-            ('yes', 'Show Duplicates'),
+            ('duplicates', 'Show Duplicates'),
+            ('no_splits', 'No stock split'),
         )
 
     def queryset(self, request, queryset):
-        if self.value() == 'yes':
+        if self.value() == 'duplicates':
             # Find transactions with the same symbol, date, and quantity
             duplicates = StockTransaction.objects.values('symbol', 'date', 'quantity') \
                 .annotate(count=Count('id')) \
@@ -30,6 +31,14 @@ class DuplicateTransactionFilter(admin.SimpleListFilter):
                     )
                 return queryset.filter(q_objects)
             return queryset.none()
+        
+        elif self.value() == 'no_splits':
+            # Get all symbols that have splits
+            split_symbols = StockSplit.objects.values_list('symbol', flat=True).distinct()
+            
+            # Find transactions with symbols that don't have a corresponding split
+            return queryset.exclude(symbol__in=split_symbols)
+            
         return queryset
 
 
