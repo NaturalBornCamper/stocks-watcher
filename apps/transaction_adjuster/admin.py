@@ -86,6 +86,7 @@ class SmartDecimalField(forms.CharField):
 
         # Handle input format based on presence of comma or period
         if isinstance(value, str):
+            value = value.replace(' ', '')
             # If there's a comma and no period, treat as French format
             if ',' in value and '.' not in value:
                 value = value.replace(',', '.')
