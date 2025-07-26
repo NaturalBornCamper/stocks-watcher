@@ -173,6 +173,7 @@ class StockTransactionAdmin(admin.ModelAdmin):
 
     # Model fields to use for custom columns ordering
     notes_hint.admin_order_field = "notes"
+    formatted_date.admin_order_field = 'date'
 
 
 class StockSplitAdmin(admin.ModelAdmin):
