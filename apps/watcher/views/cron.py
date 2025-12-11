@@ -14,7 +14,7 @@ from apps.watcher.providers.eodhd import EODHD
 from apps.watcher.providers.marketstack import MarketStack
 from apps.watcher.providers.mboum import Mboum
 
-MAX_API_QUERY = 5
+MAX_API_QUERY = 2
 
 
 def send_email(to: str, subject: str, body: str):
@@ -73,8 +73,9 @@ def fetch_prices(request):
 
     response = ""
     error_triggered = False
+    max_api_query = int(request.GET.get("limit", MAX_API_QUERY))
     for stock in Stock.objects.filter(Q(date_last_fetch__lt=datetime.today()) | Q(date_last_fetch=None)).all()[
-                 :MAX_API_QUERY]:
+                 :max_api_query]:
         get_full_price_history = stock.date_last_fetch is None
 
         response += f"******Fetching \"{stock.name}\" prices, last fetch: {stock.date_last_fetch}******\n"
