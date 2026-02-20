@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 
 from django.core.mail import send_mail
 from django.db.models import Q
@@ -14,7 +15,8 @@ from apps.watcher.providers.eodhd import EODHD
 from apps.watcher.providers.marketstack import MarketStack
 from apps.watcher.providers.mboum import Mboum
 
-MAX_API_QUERY = 2
+MAX_API_QUERY = 5
+MIN_SECONDS_BETWEEN_API_CALLS = 15
 
 
 def send_email(to: str, subject: str, body: str):
@@ -73,6 +75,7 @@ def fetch_prices(request):
 
     response = ""
     error_triggered = False
+    last_api_call_started_at = None
     max_api_query = int(request.GET.get("limit", MAX_API_QUERY))
     for stock in Stock.objects.filter(Q(date_last_fetch__lt=datetime.today()) | Q(date_last_fetch=None)).all()[
                  :max_api_query]:
@@ -80,6 +83,13 @@ def fetch_prices(request):
 
         response += f"******Fetching \"{stock.name}\" prices, last fetch: {stock.date_last_fetch}******\n"
         for api in (usd_apis if stock.currency == CURRENCY_USD else cad_apis):
+            if last_api_call_started_at is not None:
+                elapsed = time.monotonic() - last_api_call_started_at
+                sleep_seconds = MIN_SECONDS_BETWEEN_API_CALLS - elapsed
+                if sleep_seconds > 0:
+                    time.sleep(sleep_seconds)
+
+            last_api_call_started_at = time.monotonic()
             response += f"Using {api.API_NAME}\n"
             api_response = api.fetch(stock, get_full_price_history)
             if api_response["success"]:
@@ -178,4 +188,3 @@ def send_alerts(request):
             sent_alerts_count += 1
 
     return HttpResponse(f"Sent {sent_alerts_count} alerts")
-
