@@ -49,11 +49,11 @@ def fetch_prices(request):
 
     # APIS to try in order, until successful
     usd_apis = [
+        MarketStack,  # 100/month, markets all over the world
         AlphaVantageRapidAPI,  # 5/minute, 500/day, adjusted close works with free
         #        financialmodelingprep,  # 250/day, US only, No provider setup yet, but account already made. Before alpha_vantage?
         Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         EODHD,  # 20/day, past year only, includes TSX
-        MarketStack,  # 100/month, markets all over the world, only 1 year data
         # IEX,  # 7 days trial, expired
         # twelve_data, # RapidAPI, 800/day, 8 requests per minute, Canada only available on paid plan
         # finnhub, # 60/minute, worldwide stocks only paid
@@ -64,10 +64,10 @@ def fetch_prices(request):
     ]
 
     cad_apis = [
+        MarketStack,  # 100/month, markets all over the world
         Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         # AlphaVantage,  # 5/minute, 500/day, adjusted close seems for premium
         EODHD,  # 20/day, past year only, includes Canada
-        MarketStack,  # 100/month, markets all over the world, only 1 year data
     ]
     # TSX API: https://site.financialmodelingprep.com/developer/docs/tsx-prices-api/ (Didn't search correclty, first one I found, maybe better options)
 
@@ -178,5 +178,4 @@ def send_alerts(request):
             sent_alerts_count += 1
 
     return HttpResponse(f"Sent {sent_alerts_count} alerts")
-
 
