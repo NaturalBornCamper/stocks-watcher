@@ -16,7 +16,7 @@ from utils.helpers import getenv
 class MarketStack(AbstractBaseProvider):
     API_NAME = "Marketstack"
     BASE_URL = "http://api.marketstack.com/v2/eod"
-    CAD_SUFFIX = ".XSTE"
+    CAD_SUFFIX = ".TO"
 
     @classmethod
     def fetch(cls, stock: Stock, get_full_price_history: bool) -> dict:
