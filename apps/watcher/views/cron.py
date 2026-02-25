@@ -38,6 +38,11 @@ def send_email(to: str, subject: str, body: str):
 #  https://site.financialmodelingprep.com/developer/docs#daily-chart-charts
 #  https://site.financialmodelingprep.com/developer/docs/pricing
 #  Only US stocks, 250 calls per day, 5 years data
+# TODO Add API FinancialData? Already made an account, not sure it included adjusted close (Or it's the default price)
+# https://financialdata.net/pricing
+# Might only be US stocks, 300 requests per day, need to use offset as only 300 per page
+# Tested in Postman (already in project with API key), can't make CAD work
+# To check all stocks and see if CAD stocks ever show up: https://financialdata.net/stocks/NVDA
 
 def fetch_prices(request):
     # APIS IN STANDBY
@@ -51,11 +56,11 @@ def fetch_prices(request):
 
     # APIS to try in order, until successful
     usd_apis = [
-        MarketStack,  # 100/month, markets all over the world
         AlphaVantageRapidAPI,  # 5/minute, 500/day, adjusted close works with free
         #        financialmodelingprep,  # 250/day, US only, No provider setup yet, but account already made. Before alpha_vantage?
         Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         EODHD,  # 20/day, past year only, includes TSX
+        MarketStack,  # 100/month, markets all over the world
         # IEX,  # 7 days trial, expired
         # twelve_data, # RapidAPI, 800/day, 8 requests per minute, Canada only available on paid plan
         # finnhub, # 60/minute, worldwide stocks only paid
@@ -66,9 +71,9 @@ def fetch_prices(request):
     ]
 
     cad_apis = [
-        MarketStack,  # 100/month, markets all over the world
         Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
         # AlphaVantage,  # 5/minute, 500/day, adjusted close seems for premium
+        MarketStack,  # 100/month, markets all over the world
         EODHD,  # 20/day, past year only, includes Canada
     ]
     # TSX API: https://site.financialmodelingprep.com/developer/docs/tsx-prices-api/ (Didn't search correclty, first one I found, maybe better options)
