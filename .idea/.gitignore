@@ -7,3 +7,5 @@
 /dataSources/
 /dataSources.local.xml
 /deployment.xml
+/runConfigurations/Start_Server.xml
+/runConfigurations/Generate_Monthly_SA_Dump.xml
