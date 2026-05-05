@@ -1,0 +1,51 @@
+
+Company	Industry	Ticker	Date Added	Price Added	Current Price	% Chg Since Added	Zacks Rank 1 - 5	
+Lam Research	Semiconductor Equipment - Wafer Fabrication	LRCX	12/05/2016	10.05	258.62	2,473.28	2	
+Micron Technology	Semiconductor Memory	MU	12/27/2016	23.26	584.17	2,411.48	1	
+Caterpillar	Manufacturing - Construction and Mining	CAT	04/18/2017	94.14	879.27	834.00	3	
+Microsoft	COMP-SOFTWARE	MSFT	02/01/2016	55.09	418.25	659.21	3	
+Quanta Services	Engineering - R and D Services	PWR	12/23/2021	111.52	751.57	573.93	3	
+Palantir Technologies	Technology Services	PLTR	03/26/2024	24.51	146.93	499.47	3	
+Walmart	Retail - Supermarkets	WMT	05/30/2017	26.04	131.13	403.57	2	
+CACI International	COMP-SERVICES	CACI	12/02/2015	103.31	520.63	403.95	3	
+Casey's General Stores	Retail - Convenience Stores	CASY	08/20/2019	171.98	854.55	396.89	2	
+JPMorgan Chase & Co.	BANKS-MAJOR REGIONAL	JPM	10/10/2016	68.11	308.12	352.39	3	
+Deere & Company	Manufacturing - Farm Equipment	DE	07/25/2017	126.55	578.41	357.06	3	
+Shopify	Internet - Services	SHOP	09/06/2022	29.94	128.24	328.32	3	
+Block	Internet - Software	XYZ	03/28/2017	17.25	73.19	324.26	3	
+Axon Enterprise	Security and Safety Services	AXON	06/03/2020	97.85	407.56	316.52	3	
+The Goldman Sachs Group	Financial - Investment Bank	GS	07/11/2018	226.85	907.94	300.24	3	
+CBRE Group	Real Estate - Operations	CBRE	03/13/2017	36.4	142.99	292.83	3	
+MSCI	Business - Software Services	MSCI	10/10/2018	166.96	589.02	252.79	3	
+HCA HEALTHCARE	Medical - Hospital	HCA	01/07/2019	123.39	428.65	247.39	3	
+Visa	Financial Transaction Services	V	05/30/2017	94.67	328.31	246.79	3	
+Advanced Micro Devices	Computer - Integrated Systems	AMD	05/19/2025	117.17	345.95	195.25	2	
+Ulta Beauty	Retail - Miscellaneous	ULTA	03/25/2020	177.59	527.62	197.10	3	
+Arcosa	Building Products - Miscellaneous	ACA	01/06/2020	45.7	128.01	180.11	5	
+Home Depot	BLDG PRD-RT/WHL	HD	10/15/2015	120.27	320.22	166.25	4	
+Virtu Financial	Financial - Miscellaneous Services	VIRT	07/31/2023	18.9	48.81	158.23	1	
+Bank of America	Banks - Major Regional	BAC	01/09/2017	22.68	52.50	131.48	2	
+Huntington Ingalls Industries	AEROSPACE/DEFENSE	HII	05/09/2016	155.2	366.28	136.01	3	
+Alphabet	Internet - Services	GOOGL	05/19/2025	166.19	382.47	130.14	3	
+Uber Technologies	Internet - Services	UBER	08/16/2019	33.22	75.21	126.38	3	
+Broadridge Financial Solutions	Outsourcing	BR	08/29/2017	76.91	152.42	98.17	2	
+American Express	Financial - Miscellaneous Services	AXP	12/23/2021	162.47	321.43	97.84	3	
+Sea Limited	Financial - Investment Funds	SE	03/26/2020	44.04	85.91	95.07	5	
+Tesla	Automotive - Domestic	TSLA	08/29/2024	205.75	391.06	90.07	3	
+Cheniere Energy	Oil and Gas - Exploration and Production - United States	LNG	09/06/2022	159.36	271.96	70.65	3	
+Rollins	Building Products - Maintenance Service	ROL	01/07/2019	36.5	54.57	49.51	3	
+Prologis	REIT and Equity Trust - Other	PLD	06/03/2020	95.46	140.13	46.79	2	
+3M	Diversified Operations	MMM	06/29/2023	98.57	144.00	46.08	3	
+Procter & Gamble	Soap and Cleaning Materials	PG	03/23/2020	102.43	145.44	41.99	4	
+MPLX LP	Oil and Gas - Production and Pipelines	MPLX	03/26/2024	40.69	57.13	40.40	4	
+Brookfield Infrastructure Partners	Utility - Electric Power	BIP	08/16/2019	26.46	35.77	35.17	4	
+Chevron	Oil and Gas - Integrated - International	CVX	06/29/2023	154.92	190.42	22.92	1	
+Disney	Media Conglomerates	DIS	03/23/2020	85.98	102.56	19.28	3	
+Starbucks	Retail - Restaurants	SBUX	08/16/2019	95.93	105.61	10.09	2	
+GE HealthCare Technologies Inc.	Medical Info Systems	GEHC	01/04/2023	60.49	61.48	1.64	3	
+Solventum Corporation		SOLV	04/01/2024	69.15	68.03	-1.62	2	
+Constellation Brands	Beverages - Alcohol	STZ	04/18/2017	170.12	151.94	-10.69	3	
+Adobe	Computer - Software	ADBE	03/13/2020	285	253.61	-11.02	3	
+Celanese	Chemical - Diversified 	CE	12/05/2016	79.1	69.33	-12.35	3	
+The J. M. Smucker Co.	Food - Miscellaneous	SJM	08/29/2024	114.73	96.65	-15.76	4	
+Intellia Therapeutics	Medical - Biomedical and Genetics	NTLA	03/07/2023	40.08	13.87	-65.41	3	
