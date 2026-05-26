@@ -89,7 +89,7 @@ class SARating(models.Model):
 class CompiledSAScoreBase(models.Model):
     sa_stock = models.ForeignKey(SAStock, on_delete=models.CASCADE, db_index=True)
     type = models.CharField(max_length=255, choices=SARating.TYPES, blank=False)
-    score = models.PositiveSmallIntegerField(default=0)
+    score = models.SmallIntegerField(default=0)
     count = models.PositiveSmallIntegerField(default=0)
     latest_sa_ratings_date = models.DateField(verbose_name="Date of the latest Seeking Alpha ratings dump used for compilation")
 
@@ -113,4 +113,16 @@ class CompiledSAScoreDecayed(CompiledSAScoreBase):
         verbose_name_plural = "Compiled sa scores decayed"
         constraints = [
             UniqueConstraint(name="quant__compiled_score_decayed__unique__sa_stock__type", fields=["sa_stock", "type"])
+        ]
+
+
+class CompiledSAScoreMomentum(CompiledSAScoreBase):
+    WINDOW_MONTHS = 5
+    MOMENTUM_WEIGHT = 2.0
+
+    class Meta:
+        db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_momentum"
+        verbose_name_plural = "Compiled sa scores momentum"
+        constraints = [
+            UniqueConstraint(name="quant__compiled_score_momentum__unique__sa_stock__type", fields=["sa_stock", "type"])
         ]

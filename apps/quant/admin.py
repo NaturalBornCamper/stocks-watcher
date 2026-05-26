@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.quant.models import SAStock, SARating, CompiledSAScore, CompiledSAScoreDecayed
+from apps.quant.models import SAStock, SARating, CompiledSAScore, CompiledSAScoreDecayed, CompiledSAScoreMomentum
 from apps.quant.admin_filters import DateListFilter
 
 
@@ -28,3 +28,4 @@ admin.site.register(SAStock, SAStockAdmin)
 admin.site.register(SARating, SARatingAdmin)
 admin.site.register(CompiledSAScore, CompiledSAScoreAdmin)
 admin.site.register(CompiledSAScoreDecayed, CompiledSAScoreAdmin)
+admin.site.register(CompiledSAScoreMomentum, CompiledSAScoreAdmin)

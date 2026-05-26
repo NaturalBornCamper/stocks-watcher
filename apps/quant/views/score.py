@@ -3,7 +3,12 @@ import copy
 from django.http import HttpResponse
 from django.template import loader
 
-from apps.quant.models import SARating, CompiledSAScore, CompiledSAScoreDecayed
+from apps.quant.models import SARating, CompiledSAScore, CompiledSAScoreDecayed, CompiledSAScoreMomentum
+
+SA_MODEL_BY_DISPLAY = {
+    "score_decay": CompiledSAScoreDecayed,
+    "score_momentum": CompiledSAScoreMomentum,
+}
 
 DEFAULT_PER_PAGE = 20
 INDEX_SCORE = 0
@@ -30,7 +35,7 @@ for slug, name in SARating.TYPES.items():
 #  - count = Number of times each stock was in the sa rating
 def score_or_count(request, value_to_display="score"):
     quant_list = {}
-    sa_model = CompiledSAScoreDecayed if value_to_display == "score_decay" else CompiledSAScore
+    sa_model = SA_MODEL_BY_DISPLAY.get(value_to_display, CompiledSAScore)
 
     for compiled_sa_stock_type in sa_model.objects.all():
         # TODO replace statement with defaultdict instead of checking if the key exists to make it easier to read
