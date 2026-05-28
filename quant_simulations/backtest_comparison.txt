@@ -1,0 +1,31 @@
+MASTER COMPARISON - final cumulative return, 2023-11 -> 2026-05 (30 monthly rebalances)
+Rolling top-7, $2,500/stock initial, Yahoo adjusted close
+decayed window=3; momentum window=4, weight=2.0
+================================================================================================
+
+Category         |    Decayed-old |    Decayed-new |   Mom rankband |   Current top7 |        Alltime |  Alltime-gated | Best
+------------------------------------------------------------------------------------------------
+Overall          |        +28.45% |        +36.42% |       +126.26% |       +169.57% |       +277.11% |        +90.50% | Alltime
+Quant            |       +186.35% |       +206.47% |       +128.81% |       +239.11% |       +407.98% |       +504.40% | Alltime-gated
+Growth           |       +362.80% |       +345.97% |        +44.98% |       +116.26% |       +287.41% |       +209.35% | Decayed-old
+Value            |       +203.80% |       +241.25% |       +121.35% |       +145.07% |       +225.42% |       +146.12% | Decayed-new
+Technology       |       +525.09% |       +608.77% |       +439.39% |       +782.99% |       +448.97% |       +550.61% | Current top7
+Materials        |       +153.77% |       +155.45% |       +184.01% |       +106.40% |       +155.90% |       +164.09% | Mom rankband
+Communication    |        +61.11% |        +60.71% |       +180.51% |       +116.49% |        +67.60% |        +56.05% | Mom rankband
+Financial        |       +116.68% |        +95.91% |       +148.81% |        +77.70% |       +195.50% |       +171.14% | Alltime
+------------------------------------------------------------------------------------------------
+AVERAGE          |       +204.76% |       +218.87% |       +171.76% |       +219.20% |       +258.24% |       +236.53% |
+MEDIAN           |       +170.06% |       +180.96% |       +138.81% |       +130.78% |       +251.27% |       +167.61% |
+
+Category wins (best per category): Decayed-old 1, Decayed-new 1, Mom rankband 2, Current top7 1, Alltime 2, Alltime-gated 1
+
+Approaches:
+  Decayed-old      = Decayed-old linear [1,.667,.333]
+  Decayed-new      = Decayed-new [1.0, 0.5, 0.25] (production)
+  Mom rankband     = Momentum + rank-band exit (<=25)
+  Current top7     = Current top-7 (raw rank, monthly refresh)
+  Alltime          = All-time score (cumulative, no decay)
+  Alltime-gated    = All-time score, gated to currently-ranked
+
+Symbols with no price data (68), held as cash when selected:
+  ADTH, AEL, ARCH, AUGX, AXIA.PR, BASE, BRFS, BSGM, CASI, COMM, CTV, CVAC, CYBR, DESP, DFS, EBR, EBR.B, FARO, GATO, GCI, GHL, GPS, GTHX, HDELY, HEAR, HLAN, IPA, IPG, KAR, LABP, LGF.A, LIAN, LSXMA, LTMAY, MDWT, ML, NGD, OCFT, ORAN, ORTX, PALT, PARA, PCRFY, PCTI, PSTX, PTVE, PWFL, QSG, REVG, SCS, SCZMD, SCZMF, SILV, SMFKY, SMNEY, SMTSF, SNCR, SSIC, SUM, TEF, TMST, TNP, USAP, USM, VGR, VMEO, VRNA, WKME

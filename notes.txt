@@ -1,5 +1,34 @@
 TODO:
+
+MAYBE A GOOD IDEA:
+-Replace API Calls with Google Sheets API, which can get adjusted close prices
+ https://chatgpt.com/c/681989f2-167c-800e-b5b8-906976b89dc8 for idea how to do it, essentially this:
+1. Create the Google Sheet
+ Create a tab (e.g., Prices)
+ Use GOOGLEFINANCE("TICKER", "close", DATE(...)) to pull historical data
+ Optionally use =TODAY() to automate "yesterday's" or "latest close"
+2. Build an Apps Script Web App
+ Open the sheet → Extensions > Apps Script
+ Write a script to:
+ Accept GET requests with ticker and date
+ Return the adjusted close price from the sheet
+3. Deploy the Script as a Web App
+ Under Apps Script > Deploy > “Manage Deployments”
+ Set access to “Anyone” (or restricted to your Google account)
+ Note the URL — this becomes your new API endpoint
+4. Update Your Python App
+ Replace old API calls with a requests.get() to your Google Sheet API
+ Parse the JSON or text it returns
+ Log or store results as before
+Bonus (Optional Enhancements)
+ Add caching or retry logic if Google is slow or flaky
+ Log all fetched values for debugging
+ Build a bulk endpoint (e.g., return prices for 10 tickers at once)
+
+
 -PRIORITIZE
+ Check again with Codex/Claude for new algorithm with momentum
+ Urgent Quant issue: Symbol or name change, or merge with other company breaks history. Find a solution, maybe ask AI for ideas
  Symbol changes in data dumps causes issues. For example when a top stock (SCZMF) changed to SCZMD, the system thought it was 2 different stocks so the score was reset.
 -Make the DecayCompiledQuant algorithm
  One with decay value going down with 1/x or quadratic function (Or maybe a bit less strong? 1/x might be perfect though)
@@ -19,6 +48,8 @@ TODO:
  Filter/search for stock
  (All these filters and options will be different according to the quant view also)
 
+EASY AND QUICK:
+-Cronjob once per month to import data dump (Do it every hour on the first of the month)
 
 
 -Add Zacks monthly top 5. Or top 10? Also free 30 days
@@ -53,34 +84,3 @@ TODO:
 -Log system
  Make log function like Swarm Control, with level
  Log all prints better in function
-
-
-DECAY ALGORITHM TESTS BELOW
-DECAY ALGORITHM TESTS BELOW
-DECAY ALGORITHM TESTS BELOW
-DECAY ALGORITHM TESTS BELOW
-
-							No decay		with decay
-[9, 101, 101, 101, 101] 	= 23.0			92
-[5, 101, 101, 101, 101] 	= 24.0			96
-[7, 5, 101, 101, 101] 		= 23.5			70
-[33, 32, 101, 101, 101] 	= 17.0			50.75
-[4, 10, 101, 101, 101] 		= 24.25			74.25
-[15, 30, 31, 101, 101] 		= 21.5			50.75
-6, 19, 20, 101, 101] 		= 23.75			54.25
-[101, 9, 18, 101, 101] 		= 0.0			-43.75
-a 		= 72			6.25
-
-Decay factors: [1.0, 0.8, 0.6, 0.4, 0.19999999999999996]
-[101, 24, 9, 6, 10]
-combined_score 81.0, slope_score -91.0, rank_score: 172, count: 4
-61.6+55.2+38+18.2
-
-3+3.75+46
-decay_factors = [1.0, 0.75, 0.5, 0.25]
-[1, 4, 9, 101, 101] slope_score=52.75, should be higher, exactly what I want as a stock
-[10, 101, 7, 5, 101] slope_score=91, should be lower, too much changes and roller coaster
-[6, 19, 20, 101, 101] slope_score=95, good as it has good momentum
-[12, 7, 8, 101, 101] slope_score=89, should be lower as it recently lost rank
-
-

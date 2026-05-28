@@ -1,0 +1,23 @@
+CATEGORY-WEIGHTED ESTIMATE - 2023-11 -> 2026-05 (30 monthly rebalances)
+Approximates Marco's real allocation: tech-heavy, light on financial/communication.
+Weights -> Overall x3, Quant x3, Growth x1.5, Value x1.5, Technology x7, Materials x1.5, Communication x0.5, Financial x0.5
+Equal-wt = simple average of all 8 categories (what the other reports show).
+Tech-wt  = weighted average using the weights above (your actual tilt).
+======================================================================
+
+Approach         |  Equal-wt ret |   Tech-wt ret |  Tech-wt maxDD
+------------------------------------------------------------------
+Decayed(new)     |       +218.9% |       +334.2% |         -20.6%
+All-time         |       +258.2% |       +342.3% |         -18.1%
+Alltime-gated    |       +236.5% |       +353.1% |         -15.9%
+Current-7        |       +219.2% |       +397.6% |         -43.9%
+Mom rankband     |       +171.8% |       +244.9% |         -30.4%
+
+Caveats:
+  - Weights are an ESTIMATE of your typical allocation -- edit CATEGORY_WEIGHTS to match reality.
+  - STATIC approximation: does NOT model your news-driven rotation (cutting tech in bad months).
+    That rotation would likely LOWER the tech-wt drawdown below what's shown here.
+  - Your defensive rotation targets (Utility, Consumer Staples) aren't among the 8 simulated
+    categories, so this can't capture the defensive switch even in principle.
+  - Tech-heavy weighting boosted returns because tech BOOMED this period; in a tech downturn it
+    would amplify losses -- which is exactly why you de-risk tech on bad news.

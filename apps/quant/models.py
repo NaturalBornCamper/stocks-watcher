@@ -107,6 +107,9 @@ class CompiledSAScore(CompiledSAScoreBase):
 
 class CompiledSAScoreDecayed(CompiledSAScoreBase):
     DECAY_MONTHS = 3
+    # Exponential recency curve: weight for month i back = DECAY_BASE ** i.
+    # 0.5 over 3 months => [1.0, 0.5, 0.25] (steeper/more responsive than the old linear [1.0, 0.667, 0.333]).
+    DECAY_BASE = 0.5
 
     class Meta:
         db_table = f"quant_{CompiledSAScoreBase._meta.model_name}_decay"
@@ -126,3 +129,5 @@ class CompiledSAScoreMomentum(CompiledSAScoreBase):
         constraints = [
             UniqueConstraint(name="quant__compiled_score_momentum__unique__sa_stock__type", fields=["sa_stock", "type"])
         ]
+
+

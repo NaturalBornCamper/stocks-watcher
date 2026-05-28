@@ -65,13 +65,16 @@ Same idea, restricted to the last N months (default 3), with each month's
 contribution multiplied by a decay factor so recent months count more.
 
 ```
-decay_factors = [1.0, 0.667, 0.333]      # for N = 3 months
+decay_factors = [1.0, 0.5, 0.25]         # DECAY_BASE^i, for N = 3 months
 score = sum((101 - rank_i) * decay_factor_i)
 ```
 
-The decay factors are `(N - i) / N` for i in `0..N-1`, so the most recent
-month is full weight and older months ramp down linearly. Months outside the
-window aren't counted at all.
+The decay factors are `DECAY_BASE ** i` for i in `0..N-1` (default `DECAY_BASE
+= 0.5`), so the most recent month is full weight and older months fall off
+exponentially. Months outside the window aren't counted at all. (This
+exponential curve replaced an older linear `(N - i) / N` curve — a backtest
+showed the steeper `[1.0, 0.5, 0.25]` gave higher returns at the same
+drawdown, surfacing fresh winners a touch faster.)
 
 **What it's good for:** "what's hot right now". A stock has to keep showing up
 recently to keep its score. **What it ignores:** *direction* — a stock that's

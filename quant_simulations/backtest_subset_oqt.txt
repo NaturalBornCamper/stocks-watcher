@@ -1,0 +1,21 @@
+FAVOURITE-CATEGORIES SUBSET - 2023-11 -> 2026-05 (30 monthly rebalances)
+Only the 3 categories Marco uses most: Overall, Quant, Technology.
+Decayed-old = linear [1.0, 0.667, 0.333];  Decayed-new = exponential [1.0, 0.5, 0.25] (production).
+Aggregate metrics (drawdown / turnover / down-mo) are over these 3 categories only.
+================================================================================================
+
+Category         |   Decayed-old |   Decayed-new |     Current-7 |      All-time | Alltime-gated
+------------------------------------------------------------------------------------------------
+Overall          |        +28.5% |        +36.4% |       +169.6% |       +277.1% |        +90.5%
+Quant            |       +186.3% |       +206.5% |       +239.1% |       +408.0% |       +504.4%
+Technology       |       +525.1% |       +608.8% |       +783.0% |       +449.0% |       +550.6%
+------------------------------------------------------------------------------------------------
+AVERAGE          |       +246.6% |       +283.9% |       +397.2% |       +378.0% |       +381.8%
+MEDIAN           |       +186.3% |       +206.5% |       +239.1% |       +408.0% |       +504.4%
+
+Metric           |   Decayed-old |   Decayed-new |     Current-7 |      All-time | Alltime-gated
+------------------------------------------------------------------------------------------------
+Max drawdown     |        -22.3% |        -23.1% |        -43.2% |        -19.8% |        -15.6%
+Sells/mo         |           3.2 |           3.2 |           3.7 |           0.6 |           2.6
+Distinct held    |          83.3 |          83.0 |          90.7 |          20.0 |          45.0
+Down-mo ret      |        -35.0% |        -34.7% |        -35.7% |        -38.9% |        -32.0%

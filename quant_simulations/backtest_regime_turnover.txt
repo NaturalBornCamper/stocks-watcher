@@ -1,0 +1,22 @@
+REGIME & TURNOVER ANALYSIS - 2023-11 -> 2026-05 (30 monthly rebalances)
+Aggregate portfolio = all 8 categories combined ($140,000 initial)
+Turnover = avg positions sold per rebalance (lower = fewer taxable events / better for long-term hold)
+============================================================================================
+
+Approach         |  Final ret |  Max drawdown |  Sells/mo | Distinct held |  Down-mo ret
+--------------------------------------------------------------------------------------------
+Decayed-old      |    +204.8% |        -12.2% |       3.0 |          72.5 |       -28.2%
+Decayed-new      |    +218.9% |        -13.0% |       3.0 |          72.5 |       -28.7%
+Mom rankband     |    +171.8% |        -13.9% |       2.8 |          76.0 |       -28.8%
+Current top7     |    +219.2% |        -27.1% |       3.5 |          79.8 |       -34.4%
+Alltime          |    +258.2% |        -14.4% |       0.6 |          20.4 |       -20.1%
+Alltime-gated    |    +236.5% |         -9.1% |       2.1 |          37.2 |       -18.1%
+
+Down-months (aggregate fell, 8 of 30): 2024-05, 2024-07, 2024-08, 2025-03, 2025-04, 2025-05, 2025-08, 2026-04
+
+Notes:
+  - 'Down-mo ret' = compounded return ACROSS just the down-months above. Less negative = better
+    drawdown protection. This is the closest proxy we have to downturn behaviour, but these
+    are shallow dips in a bull market -- NOT a real bear. Treat as suggestive, not conclusive.
+  - 'Sells/mo' and 'Distinct held' measure turnover: lower = fewer taxable events, better for
+    a buy-and-hold / tax-deferred portfolio.

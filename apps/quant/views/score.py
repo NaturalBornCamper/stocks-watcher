@@ -3,7 +3,9 @@ import copy
 from django.http import HttpResponse
 from django.template import loader
 
-from apps.quant.models import SARating, CompiledSAScore, CompiledSAScoreDecayed, CompiledSAScoreMomentum
+from apps.quant.models import (
+    SARating, CompiledSAScore, CompiledSAScoreDecayed, CompiledSAScoreMomentum,
+)
 
 SA_MODEL_BY_DISPLAY = {
     "score_decay": CompiledSAScoreDecayed,

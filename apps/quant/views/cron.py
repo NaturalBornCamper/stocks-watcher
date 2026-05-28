@@ -99,12 +99,13 @@ def compile_sa_score(request):
 def compile_sa_score_decayed(request):
     max_quant_types = int(request.GET.get("limit", MAX_SA_RATING_TYPES_PER_RUN))
     decay_months = int(request.GET.get("decay_months", CompiledSAScoreDecayed.DECAY_MONTHS))
-    print(f"Max decay distance: {decay_months}")
+    decay_base = float(request.GET.get("decay_base", CompiledSAScoreDecayed.DECAY_BASE))
+    print(f"Max decay distance: {decay_months}, decay base: {decay_base}")
 
-    # Builds the decay factor list of length (max_decay_distance + 1). For example:
-    # max_decay_distance 3 => [1.0, 0.75, 0.5, 0.25]
-    # max_decay_distance 1 => [1.0, 0.5]
-    decay_factors = [1.0 - (i / decay_months) for i in range(decay_months)]
+    # Exponential recency curve: weight for month i back = decay_base ** i. For example:
+    # decay_base 0.5, decay_months 3 => [1.0, 0.5, 0.25]
+    # decay_base 0.5, decay_months 1 => [1.0]
+    decay_factors = [decay_base ** i for i in range(decay_months)]
     print(f"Decay factors: {decay_factors}")
 
     latest_quant_dump_date = SARating.objects.aggregate(latest_date=Max('date'))['latest_date']
@@ -218,3 +219,4 @@ def compile_sa_score_momentum(request):
         print(f"Compiled type: {SARating.TYPES[current_type]} ({len(instances)} stock symbols)")
 
     return HttpResponse(f"Compiled {len(types_to_update)} Seeking Alpha momentum score types")
+
