@@ -39,13 +39,42 @@ def score_or_count(request, value_to_display="score"):
     quant_list = {}
     sa_model = SA_MODEL_BY_DISPLAY.get(value_to_display, CompiledSAScore)
 
-    for compiled_sa_stock_type in sa_model.objects.all():
+    # Gating annotation: only meaningful for the all-time score view (where the "corpse" risk lives).
+    # Marks each stock by whether it's still showing up in this month's and last month's SA ratings.
+    show_gating = value_to_display == "score"
+    latest_stock_ids, prev_stock_ids = set(), set()
+    if show_gating:
+        recent_dates = list(
+            SARating.objects.values_list("date", flat=True).distinct().order_by("-date")[:2]
+        )
+        if recent_dates:
+            latest_stock_ids = set(
+                SARating.objects.filter(date=recent_dates[0]).values_list("sa_stock_id", flat=True)
+            )
+        if len(recent_dates) > 1:
+            prev_stock_ids = set(
+                SARating.objects.filter(date=recent_dates[1]).values_list("sa_stock_id", flat=True)
+            )
+
+    for compiled_sa_stock_type in sa_model.objects.select_related("sa_stock"):
         # TODO replace statement with defaultdict instead of checking if the key exists to make it easier to read
         if compiled_sa_stock_type.sa_stock.symbol not in quant_list:
-            quant_list[compiled_sa_stock_type.sa_stock.symbol] = {
+            entry = {
                 "name": compiled_sa_stock_type.sa_stock.name,
-                "types": copy.deepcopy(DEFAULT_STOCK_DICT)
+                "types": copy.deepcopy(DEFAULT_STOCK_DICT),
+                "row_class": "",
             }
+            if show_gating:
+                in_latest = compiled_sa_stock_type.sa_stock_id in latest_stock_ids
+                in_prev = compiled_sa_stock_type.sa_stock_id in prev_stock_ids
+                if not in_latest and not in_prev:
+                    entry["row_class"] = "gated-red"     # gone this month AND last month
+                elif not in_latest:
+                    entry["row_class"] = "gated-orange"  # just dropped out this month
+                elif not in_prev:
+                    entry["row_class"] = "gated-yellow"  # was out last month, back this month
+                # else: present in both -> no row class (normal)
+            quant_list[compiled_sa_stock_type.sa_stock.symbol] = entry
 
         quant_list[compiled_sa_stock_type.sa_stock.symbol]["types"][compiled_sa_stock_type.type] = {
             # "company": compiled_quant_stock_type.score,

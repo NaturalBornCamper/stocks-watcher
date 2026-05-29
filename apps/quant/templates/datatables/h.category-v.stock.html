@@ -10,7 +10,7 @@
         {% endfor %}
     </tr>
     {% for symbol, stock in data.items %}
-        <tr>
+        <tr class="{{ stock.row_class }}">
             <td>
                 {{ symbol }}
             </td>
