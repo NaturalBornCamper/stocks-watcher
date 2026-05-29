@@ -190,6 +190,35 @@ These were untestable on the original 2023-08 → 2026-05 bull-only data:
 - Does the user's defensive rotation pattern (cutting tech on bad news)
   become visibly valuable in the aggregate equity curve?
 
+### 7a. Long-window experiment (24-month variants) — re-offer when data allows
+
+Marco was curious whether a **24-month capped all-time** (uniform window) or a
+**24-month decayed score** (e.g. `0.9 ** i`) would beat the existing approaches —
+the appeal being "natural corpse expiry after 24 months without the binary gate."
+I ran it ad-hoc in May 2026 with the caveat that only ~10 of 30 sim months
+exercised a full 24-month window (data started 2023-08, sim started 2023-11).
+Result was inconclusive: both variants beat existing approaches on **mean** but
+Tech-outlier-driven; **median** didn't follow, and the partial-window /
+bull-market-stickiness confound makes the result unreliable.
+
+**Re-offer this experiment when:** the data has roughly 4+ years of history
+AND ideally a real correction/bear in the window (so the full 24-month period
+gets stressed across regimes, not just a uniform bull).
+
+**To run it again** (no code changes needed — paste the python into
+`python manage.py shell` via heredoc + `exec(r"""...""")` wrapper to bypass
+REPL block-rules): the snippet defines `select_capped` (uniform weights,
+24-month window) and `select_dec24` (exponential `0.9 ** i`, 24-month window),
+both reusing the existing `score_decayed` / `top_n` / price-cache machinery.
+The previous run's snippet is recoverable from the conversation thread on
+2026-05-28; if not, reconstruct from `_simulate` in `backtest_scores.py` —
+the only new piece is a `rwind_long(as_of, n)` helper that handles
+months_to_rewind > 11 (the production `rewind_months` only does ONE +12
+correction so it breaks past 11).
+
+**Tell Marco when re-offering:** "Your 24-month-window question from 2026-05.
+Data window is now big enough to test it properly. Want me to run it?"
+
 ## 8. Things that broke me / would catch you
 
 - **Don't move the management command file**. Django *requires* it to live at

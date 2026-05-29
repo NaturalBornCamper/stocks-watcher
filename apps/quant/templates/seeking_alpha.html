@@ -1,25 +1,5 @@
 {% extends 'base.html' %}
 
-{% block head_css %}
-    <style>
-        table, th, td {
-            border: 1px solid black;
-        }
-
-        th {
-            cursor: pointer;
-        }
-
-        /* Gating row colours -- only set by the all-time score view (sa/score). */
-        /* RED    = stock missing from BOTH this month's and last month's SA ratings (gone 2+ months) */
-        /* ORANGE = stock missing from this month's SA ratings (just dropped out)                     */
-        /* YELLOW = stock back in this month's SA ratings after being out last month                  */
-        tr.gated-red    td { background: #ffcccc; }
-        tr.gated-orange td { background: #ffe0b3; }
-        tr.gated-yellow td { background: #fff9c4; }
-    </style>
-{% endblock %}
-
 {% block content %}
     {% block sa_ratings_menu %}
         {% include "_sa_ratings_menu.html" %}

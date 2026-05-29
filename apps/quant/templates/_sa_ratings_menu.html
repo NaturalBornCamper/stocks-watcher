@@ -1,13 +1,6 @@
 {# Horizontal nav for the Seeking Alpha compiled-score views.                          #}
 {# Active link is highlighted by comparing the current URL name to each entry's name. #}
-<style>
-    .sa-menu          { margin-bottom: 1em; padding-bottom: .4em; border-bottom: 1px solid #ccc; }
-    .sa-menu a        { display: inline-block; padding: .3em .8em; margin-right: .25em;
-                        text-decoration: none; color: #444; border-radius: 3px; }
-    .sa-menu a:hover  { background: #eee; }
-    .sa-menu a.active { font-weight: bold; color: #000; border-bottom: 2px solid #333; }
-</style>
-
+{# Styles live in static/css/style.css (.sa-menu rules).                               #}
 <nav class="sa-menu">
     {% with current=request.resolver_match.url_name %}
         <a href="{% url 'quant.sa.score' %}"

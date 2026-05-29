@@ -1,0 +1,89 @@
+/* =====================================================================
+   Global stylesheet for the Stocks Watcher frontend (single theme, dark).
+   Linked from every app's base.html (currently: apps/quant/templates/base.html).
+   The Django admin has its own templates and is intentionally NOT affected.
+   ===================================================================== */
+
+/* --- Page chrome ---------------------------------------------------- */
+body {
+    background: #1a1a1a;
+    color: #d4d4d4;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 1em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #f0f0f0;
+}
+
+a {
+    color: #66b3ff;
+    text-decoration: none;
+}
+a:hover {
+    color: #99ccff;
+    text-decoration: underline;
+}
+
+code, pre {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+/* --- Data tables ---------------------------------------------------- */
+table {
+    border-collapse: collapse;
+}
+table, th, td {
+    border: 1px solid #555;
+}
+th {
+    background: #2a2a2a;
+    color: #f0f0f0;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+td {
+    padding: 3px 6px;
+}
+tr:hover td {
+    background: #232323;
+}
+
+/* --- SA ratings nav menu (top of /sa/* pages) ----------------------- */
+.sa-menu {
+    margin-bottom: 1em;
+    padding-bottom: .4em;
+    border-bottom: 1px solid #444;
+}
+.sa-menu a {
+    display: inline-block;
+    padding: .3em .8em;
+    margin-right: .25em;
+    color: #b0b0b0;
+    border-radius: 3px;
+}
+.sa-menu a:hover {
+    background: #2a2a2a;
+    color: #fff;
+    text-decoration: none;
+}
+.sa-menu a.active {
+    font-weight: bold;
+    color: #fff;
+    border-bottom: 2px solid #66b3ff;
+}
+
+/* --- Gating row colours (dark-mode tuned) --------------------------- */
+/* RED    = stock missing from BOTH this month's and last month's SA ratings (gone 2+ months) */
+/* ORANGE = stock missing from this month's SA ratings (just dropped out)                     */
+/* YELLOW = stock back in this month's SA ratings after being out last month                  */
+tr.gated-red    td { background: #8b1f1f; }
+tr.gated-orange td { background: #9c5c1a; }
+tr.gated-yellow td { background: #8a751c; }
+
+tr.gated-red:hover    td { background: #a82828; }
+tr.gated-orange:hover td { background: #b86c20; }
+tr.gated-yellow:hover td { background: #a08a25; }
