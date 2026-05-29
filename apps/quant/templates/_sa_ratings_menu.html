@@ -11,5 +11,7 @@
            class="{% if current == 'quant.sa.score_momentum' %}active{% endif %}">Momentum</a>
         <a href="{% url 'quant.sa.count' %}"
            class="{% if current == 'quant.sa.count' %}active{% endif %}">Count</a>
+        <a href="{% url 'quant.sa.month' %}"
+           class="{% if current == 'quant.sa.month' or current == 'quant.sa.month_date' %}active{% endif %}">Month</a>
     {% endwith %}
 </nav>

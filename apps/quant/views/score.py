@@ -1,6 +1,8 @@
 import copy
+from datetime import date as date_cls
 
-from django.http import HttpResponse
+from django.db.models import Max
+from django.http import Http404, HttpResponse
 from django.template import loader
 
 from apps.quant.models import (
@@ -98,3 +100,63 @@ def historical(request, type: str, date: str = None):
 
 def stock(request, symbol: str):
     pass
+
+
+# Per-month grid: for a chosen month, shows each stock's RANK in each SA category
+# (plus the historical count of times it has been ranked in that category).
+# date_str is "YYYY-MM"; if omitted, falls back to the latest available month.
+def month_view(request, date_str=None):
+    if date_str:
+        try:
+            year, month = date_str.split("-")
+            chosen_date = date_cls(int(year), int(month), 1)
+        except (ValueError, AttributeError):
+            raise Http404(f"Bad month format (expected YYYY-MM): {date_str}")
+    else:
+        chosen_date = SARating.objects.aggregate(Max("date"))["date__max"]
+        if not chosen_date:
+            raise Http404("No SA ratings imported yet")
+
+    # All distinct months for the top navigation, newest first.
+    available_dates = list(
+        SARating.objects.values_list("date", flat=True).distinct().order_by("-date")
+    )
+
+    # Ratings for the chosen month, with stock pulled in via JOIN (no N+1).
+    ratings = list(
+        SARating.objects.filter(date=chosen_date).select_related("sa_stock")
+    )
+
+    # Counts per (sa_stock_id, type) for stocks present in the chosen month,
+    # so each cell can show "rank (count-historical)".
+    stock_ids = {r.sa_stock_id for r in ratings}
+    counts = {
+        (c.sa_stock_id, c.type): c.count
+        for c in CompiledSAScore.objects.filter(sa_stock_id__in=stock_ids)
+    }
+
+    # Default cell shape per type (rank blank if the stock isn't in that type this month).
+    default_types = {slug: {"rank": "", "count": 0} for slug in SARating.TYPES}
+
+    quant_list = {}
+    for r in ratings:
+        sym = r.sa_stock.symbol
+        if sym not in quant_list:
+            quant_list[sym] = {
+                "name": r.sa_stock.name,
+                "types": copy.deepcopy(default_types),
+                "row_class": "",  # gating not meaningful in a per-month view
+            }
+        quant_list[sym]["types"][r.type] = {
+            "rank": r.rank,
+            "count": counts.get((r.sa_stock_id, r.type), 0),
+        }
+
+    template = loader.get_template("month_view.html")
+    context = {
+        "quant_list": quant_list,
+        "value_to_display": "rank",
+        "available_dates": available_dates,
+        "chosen_date": chosen_date,
+    }
+    return HttpResponse(template.render(context, request))

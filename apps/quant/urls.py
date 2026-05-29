@@ -17,7 +17,7 @@ Including another URLconf
 from django.urls import path
 
 from apps.quant.views import cron
-from apps.quant.views.score import stock, score_or_count, historical
+from apps.quant.views.score import stock, score_or_count, historical, month_view
 
 urlpatterns = [
     # Cronjobs
@@ -31,6 +31,8 @@ urlpatterns = [
     path("sa/score_decayed", score_or_count, {"value_to_display": "score_decay"}, name="quant.sa.score_decay"),
     path("sa/score_momentum", score_or_count, {"value_to_display": "score_momentum"}, name="quant.sa.score_momentum"),
     path("sa/count", score_or_count, {"value_to_display": "count"}, name="quant.sa.count"),
+    path("sa/month", month_view, name="quant.sa.month"),
+    path("sa/month/<str:date_str>", month_view, name="quant.sa.month_date"),
     path("sa/historical/<str:type>", historical, name="quant.sa.historical"),
     path("sa/historical/<str:type>/<str:date>", historical, name="quant.sa.historical_date"),
     path("sa/stock/<str:sa_stock>", stock, name="quant.sa.stock"),

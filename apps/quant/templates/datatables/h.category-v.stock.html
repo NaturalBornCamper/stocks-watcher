@@ -24,6 +24,9 @@
             {% for type in stock.types.values %}
                 {% if value_to_display == "count" %}
                     <td data-sort="{{ type.count }}" title="Score: {{ type.score }}">{{ type.count }}</td>
+                {% elif value_to_display == "rank" %}
+                    {# rank: empty rank means stock wasn't in this type this month -> sort to the bottom with 999 #}
+                    <td data-sort="{% if type.rank %}{{ type.rank }}{% else %}999{% endif %}" title="Count: {{ type.count }}">{% if type.rank %}{{ type.rank }} ({{ type.count }}){% endif %}</td>
                 {% else %}
                     <td data-sort="{{ type.score }}" title="Count: {{ type.count }}">{{ type.score }} ({{ type.count }})</td>
                 {% endif %}
