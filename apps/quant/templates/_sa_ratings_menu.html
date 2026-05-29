@@ -4,14 +4,19 @@
 <nav class="sa-menu">
     {% with current=request.resolver_match.url_name %}
         <a href="{% url 'quant.sa.score' %}"
+           title="Cumulative all-time score (sum of 101 − rank over every month). Long-term, low-turnover picks."
            class="{% if current == 'quant.sa.score' or current == 'quant.sa' %}active{% endif %}">Score</a>
         <a href="{% url 'quant.sa.score_decay' %}"
+           title="Recent-months score, last 3 months weighted [1.0, 0.5, 0.25]. Responsive — drops stocks that fade."
            class="{% if current == 'quant.sa.score_decay' %}active{% endif %}">Decayed</a>
         <a href="{% url 'quant.sa.score_momentum' %}"
+           title="Rewards stocks whose ranks are rising fast. Designed to catch breakouts; weakest in backtests so far."
            class="{% if current == 'quant.sa.score_momentum' %}active{% endif %}">Momentum</a>
         <a href="{% url 'quant.sa.count' %}"
+           title="How many times each stock has appeared in each category's top-100 (presence count, ignores rank)."
            class="{% if current == 'quant.sa.count' %}active{% endif %}">Count</a>
         <a href="{% url 'quant.sa.month' %}"
+           title="Drill into a single month's actual ranks (rank + historical count). Pick any month from the date selector."
            class="{% if current == 'quant.sa.month' or current == 'quant.sa.month_date' %}active{% endif %}">Month</a>
     {% endwith %}
 </nav>
