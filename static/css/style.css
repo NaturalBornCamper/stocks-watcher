@@ -44,7 +44,12 @@ th {
     color: #f0f0f0;
     cursor: pointer;
     padding: 4px 8px;
+    user-select: none; /* prevent text-select on double-click while sorting */
 }
+
+/* Sort indicators (set by static/js/table-sort.js when a column is active) */
+th.sorted-asc::after  { content: ' \25B2'; color: #66b3ff; font-size: 0.8em; }
+th.sorted-desc::after { content: ' \25BC'; color: #66b3ff; font-size: 0.8em; }
 td {
     padding: 3px 6px;
 }
