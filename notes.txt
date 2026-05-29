@@ -52,9 +52,6 @@ Bonus (Optional Enhancements)
  Filter/search for stock
  (All these filters and options will be different according to the quant view also)
 -Alert system to send email when a stock that I "favorited" (I have in my portfolio) has been gated out
--Move cronjobs to commands
- Have cronjob that does ALL monthly compiling
- Have a cronjob that does ALL quant manipulations + import + compiling
 -To speed page sorting up, have checkbox to only show stocks with a score of at least X (50?) in any column
 
 

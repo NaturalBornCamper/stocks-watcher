@@ -23,90 +23,110 @@ Run configurations live in **two parallel files** that must always be kept in sy
 - PyCharm: `.idea/runConfigurations/<Name>.xml` (one file per entry)
 - VS Code: `.vscode/launch.json` (single file with one entry per configuration)
 
-Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`CRON` ↔ `2-CRON`, `Tests` ↔ `3-Tests`). Order numbers in `presentation.order` should be unique within a group.
+Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`Migration` ↔ `1-Migration`, `Commands` ↔ `2-Commands`; future `Tests` would map to `3-Tests`). Order numbers in `presentation.order` should be unique within a group.
 
-If a new test module is added, also update the "Run ALL Tests" entry in both files so the umbrella runner includes it.
+Secrets / API keys do **not** belong in these files. Both PyCharm and VS Code load `.env` (gitignored) — PyCharm via `<option name="ENV_FILES" value="$PROJECT_DIR$/.env" />`, VS Code via `"envFile": "${workspaceFolder}/.env"`. Only `PYTHONUNBUFFERED` and `DJANGO_SETTINGS_MODULE` should stay in the run-config env (they are tied to run mode, not to the machine).
+
+When tests eventually exist (none yet), follow the Games Library pattern: one config per test module under a `Tests` / `3-Tests` group, plus an umbrella "Run ALL Tests" entry that must be updated whenever a new test module is added.
 
 ## Development Commands
 
 ```bash
-# Run development server
+# Run development server (PyCharm/VS Code config: "Run Dev Server")
 python manage.py runserver
 
-# Database migrations
+# Database migrations ("Make Migrations" / "Migrate" run configs)
 python manage.py makemigrations
 python manage.py migrate
 
-# Run all tests
-python manage.py test
+# Standard monthly SA refresh: reorganise raw dumps + import ("Refresh SA Ratings")
+# Wraps the two commands below; stops if the reorganise step fails.
+python manage.py refresh_sa_ratings
 
-# Run a single test module
-python manage.py test library.tests.test_steam_cache_service
+# Import a month's SA ratings dump CSV(s) ("Import SA Ratings")
+python manage.py import_sa_ratings "data_dumps/seeking_alpha/*.csv"
 
-# Data management commands (all support --limit N, --game-id ID)
-python manage.py refresh_steam_api_cache [--dry-run]
-python manage.py refresh_steam_headers [--dry-run]
-python manage.py refresh_igdb_api_cache [--dry-run]
-python manage.py fill_steam_ids_from_igdb_ids [--dry-run]
-python manage.py fill_igdb_ids_from_steam_ids [--dry-run]
-python manage.py fetch_completion_times
-python manage.py fetch_release_dates
-python manage.py refresh_app_cards_block
-python manage.py list_games
+# Reorganise raw SA dump CSVs into one CSV per date ("Generate Monthly SA Dump")
+python manage.py sa_ratings_manipulations one_csv_per_date \
+    "data_dumps/seeking_alpha/" "data_dumps/seeking_alpha/"
+
+# Research backtest comparing scoring algorithms (NOT a routine user command --
+# Claude runs this when investigating algorithm tweaks; output -> quant_simulations/)
+python manage.py backtest_scores
+
+# Dev / data maintenance (destructive -- truncates tables)
+python manage.py db_operations empty_sa_stocks
+python manage.py db_operations empty_sa_ratings
+python manage.py db_operations empty_compiled_scores
+python manage.py db_operations empty_compiled_scores_decayed
+python manage.py db_operations empty_all_quant
 ```
 
-Set `DJANGO_SETTINGS_MODULE=settings.dev` for local work. Copy `.env.example` to `.env` and fill in IGDB credentials.
+Copy `.env.example` to `.env` and fill in the email / price-API credentials. `DJANGO_SETTINGS_MODULE=settings.dev` is set in the run-config env (not in `.env`) because it is tied to the run mode, not to the machine.
 
 ## Architecture
 
-This is a Django 5.2 app — a personal video game library manager that pulls data from Steam and IGDB APIs and renders it in a web UI.
+A Django app that ingests monthly Seeking Alpha "top 100" stock ratings, compiles per-stock scores from the rank history under several scoring algorithms, and renders a dark-themed web grid comparing stocks across SA categories.
 
-### Data Layer
+URL prefixes (project `urls.py`):
+- `""` (root) → `apps.watcher`
+- `/quant/` → `apps.quant`
+- `/admin/` → Django admin
 
-**Models** (`library/models/`): `Game` is the core record. `Platform`, `Tag`, and `TagGroup` describe how the game is categorized. `GamePlatform` and `GameTag` are the join tables. `GameApiFetchState` tracks cooldown state per game so API requests are not repeated too soon. `AdditionalSteamId` handles games with multiple Steam app IDs.
+### Apps
 
-**Game data on disk** (`game_data/`): API responses are cached as JSON files, not in the database. Layout:
-- `steam/api_data/` — Steam Store API JSON responses
-- `steam/headers/`, `steam/screenshots/` — downloaded images
-- `igdb/` — IGDB data and cover art (resized to banner dimensions)
-- `custom_steam/` — manual override JSONs used when no API cache exists
-- `defaults/` — last-resort fallback JSON for games with no data at all
+**`apps/quant/`** — Seeking Alpha ratings, scoring algorithms, and the main frontend grids.
+- Models: `SAStock`, `SARating`, `CompiledSAScore`, `CompiledSAScoreDecayed`, `CompiledSAScoreMomentum`.
+- Cron endpoints under `/quant/cron/compile_sa_score_*/` recompile per-stock scores when a new ratings dump is detected. Each endpoint skips rating types already up to date for the latest dump.
+- Frontend views (`apps/quant/views/score.py`):
+  - `/quant/sa/score` — all-time cumulative score
+  - `/quant/sa/score_decayed` — recent-months exponential decay
+  - `/quant/sa/score_momentum` — momentum / rising-stars
+  - `/quant/sa/count` — # of months each stock has been ranked
+  - `/quant/sa/month[/<YYYY-MM>]` — single-month rank view with date selector
 
-### Provider / Service / View Pipeline
+**`apps/watcher/`** — stock-price tracking, separate from quant.
+- Models: `Stock`, `Price`, `Alert`.
+- Provider classes for several price APIs in `apps/watcher/providers/` (EODHD, Alpha Vantage, IEX, Marketstack, mboum, RapidAPI). All share `AbstractBaseProvider`.
 
-1. **Providers** (`library/providers/`) make the actual HTTP calls. `SteamStore` hits the Steam Store API. `IGDBProvider` calls IGDB (games, external_games, time_to_beat). `HowLongToBeatProvider` scrapes HLTB. All share `AbstractBaseProvider`.
+### Scoring algorithms
 
-2. **Cache services** (`library/services/`) manage reading and writing the on-disk JSON. `SteamCacheService` and `IGDBCacheService` both extend `BaseGameCacheService`. The fallback hierarchy is: fresh cache → stale cache (if refresh fails) → custom override JSON → default JSON.
+The four `Compiled*` models each store per-`(sa_stock, type)` rows of `{score, count, latest_sa_ratings_date}`. They differ only in how `score` is computed:
 
-3. **Header image services** (`steam_header.py`, `igdb_header.py`) own the header-banner downloads. Workflow is intentionally asymmetric between providers because the providers are: Steam header URLs are derivable from `steam_id` alone (no API call needed), so Steam has its own `refresh_steam_headers` cron and a per-game cooldown stored in `GameApiFetchState`. IGDB cover URLs contain an opaque hash that only appears in the IGDB API response, so the IGDB header download stays bundled with `refresh_igdb_api_cache` (called from `IGDBCacheService.postprocess_refresh_success`) — no separate IGDB header cron exists.
+| Model | Idea | Cron |
+| --- | --- | --- |
+| `CompiledSAScore` | All-time `sum(101 - rank)` over every month, no decay | `cron/compile_sa_score/` |
+| `CompiledSAScoreDecayed` | Last N months, exponential `DECAY_BASE^i` weight (default N=3, base=0.5 → `[1.0, 0.5, 0.25]`) | `cron/compile_sa_score_decayed/` |
+| `CompiledSAScoreMomentum` | Base + 2 × momentum (slopes between consecutive months) — designed to catch rising stars | `cron/compile_sa_score_momentum/` |
 
-4. **Views** (`library/views/`):
-   - `index()` — renders the library grid using pre-built cached HTML card blocks; rebuilt on demand by `refresh_app_cards_block`.
-   - `tab()` — serves an HTML fragment for a single game, loaded via AJAX. The Steam tab cache is considered stale after `TAB_STEAM_CACHE_MAX_AGE_HOURS` (12 h).
-   - `media_asset()` — serves provider-scoped images with path validation to block directory traversal.
+Tuning knobs (e.g. `DECAY_BASE`, `WINDOW_MONTHS`, `MOMENTUM_WEIGHT`) live as class constants on each compiled model, so the cron formula can be tweaked without a migration. Per-request overrides are accepted (`?decay_base=0.7` etc.) for experimentation.
 
-5. **`game_tab.build_render_data()`** (`library/services/game_tab.py`) is the orchestration point for the tab view. It decides whether to show Steam or IGDB data and assembles all fields needed for the template.
+### Frontend
 
-### Cache Invalidation
+- All templates extend `apps/quant/templates/base.html`.
+- Global stylesheet at `static/css/style.css` (single dark theme — admin is intentionally not affected; it uses its own templates).
+- Table sort JS at `static/js/table-sort.js`, loaded globally from `base.html`. Looks for `<table class="sortable">` and wires click-to-sort with ▲ / ▼ indicators on the active header. Pre-extracts values once per sort and applies the new order via a single `DocumentFragment` append.
+- SA-ratings nav: template partial `_sa_ratings_menu.html`, included from `seeking_alpha.html`. Each link has a `title` tooltip explaining what its score does.
+- Gating row colours (red / orange / yellow) on the score/decayed/momentum/count views indicate stocks missing from this month's and/or last month's SA ratings — see `apps/quant/views/score.py:score_or_count` for the rules. They are most informative on the all-time `score` view (corpse risk).
 
-Django signals in `library/signals.py` automatically invalidate the cached game-cards HTML block whenever a `Game`, `Platform`, or `Tag` record is saved or deleted, so the index page stays consistent without manual cache-busting.
+### Simulations / backtests
 
-### Price Label Logic
+`apps/quant/management/commands/backtest_scores.py` runs rolling top-7 portfolio simulations across several algorithm variants, fetches Yahoo prices (cached to `quant_simulations/_backtest_price_cache.json`), and writes comparison reports to `quant_simulations/*.txt`.
 
-Price display is derived from Steam's `price_overview` and `is_free` fields, not stored directly. A game delisted from Steam gets a top-level `delisted: true` flag in its cached JSON (and the `price_overview` block is dropped). This is set automatically when Steam returns `{"success": false}` for the app, and can also be set by hand in `game_data/custom_steam/api_data/` for permanently delisted games. The same convention applies to IGDB cache files when IGDB returns "not found".
+This is **Claude's research tool**, not part of routine operation. The full handoff doc — what's been tested, what's been dropped, how to re-run, what to revisit when more data exists — is at `quant_simulations/SIMULATIONS_GUIDE.md`. The user-facing 1-pager is `quant_simulations/README.md`.
+
+Long-running decision history (chronological "Follow-up N" entries documenting algorithm experiments) lives in the auto-loaded memory file: `~/.claude/projects/E--DEV-Stocks-Watcher/memory/project_momentum_backtest.md`. Read it first when picking the project back up after a long gap.
 
 ### Settings
 
-- `settings/base.py` — shared config, IGDB credentials, cache settings, feature flags
-- `settings/dev.py` — SQLite3, logs queries to `django_queries.log`
-- `settings/production.py` — SQLite3, sets `STATIC_ROOT`
+- `settings/base.py` — shared config, email settings, env-var helpers, `STATICFILES_DIRS`
+- `settings/dev.py` — local dev (SQLite `db.sqlite3`, `DEBUG=True`, query log to `django_queries.log`)
+- `settings/production.py` — prod (SQLite, sets `STATIC_ROOT`)
 
-Key constants (in `base.py`): `TAB_STEAM_CACHE_MAX_AGE_HOURS`, `INDEX_PAGE_LOAD_API_REQUEST_BUDGET`, `DEFAULT_GAME_NOT_FOUND_API_COOLDOWN_HOURS`, `STEAM_HEADER_IMAGE_URL_TEMPLATES` (CDN mirrors for header art), `STEAM_HEADER_REDOWNLOAD_AFTER_HOURS`.
+Local secrets / API keys live in `.env` (gitignored) and are loaded by run configs via `ENV_FILES` (PyCharm) / `envFile` (VS Code). `.env.example` documents the expected keys.
 
-`Game.hidden=True` is the catch-all "ignore this game" flag: hidden games are excluded from every cronjob's queryset (Steam/IGDB API caches, header downloads, ID resolution, completion times, release dates) and from the index grid and tab view. The flag stays editable in admin so you can keep records of crappy/duplicate/beta games without polluting the rest of the app.
+### Memory directory
 
-Steam header images are downloaded by the `refresh_steam_headers` cron straight from the Steam CDN (`shared.fastly.steamstatic.com` with `shared.akamai.steamstatic.com` as a backup mirror). No Steam API call is needed; the URL is built from `steam_id`. Per-game cooldowns live in `GameApiFetchState` under the `download_steam_header_image` operation: long after a successful download, short after a failure.
-
-### Testing
-
-Tests live in `library/tests/`. The test suite uses Django's `TestCase` with `LocMemCache` and fixture JSON files that mock API responses. `test_provider_live_smoke.py` hits real APIs and should not be run in CI.
+In addition to the on-disk docs above, Claude has a per-project memory directory at `~/.claude/projects/E--DEV-Stocks-Watcher/memory/`. The current entries:
+- `project_momentum_backtest.md` — chronological history of backtest experiments and algorithm decisions
+- `MEMORY.md` — short index of the memory entries

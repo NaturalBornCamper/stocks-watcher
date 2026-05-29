@@ -1,0 +1,138 @@
+{
+    // Mirrors .idea/runConfigurations/*.xml -- folderName attributes map to presentation.group here.
+    // Keep these two files in sync (see CLAUDE.md "Run Configurations").
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Dev Server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "runserver",
+                "localhost:8000"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            }
+        },
+
+        // ---------- Migration ----------
+        {
+            "name": "Make Migrations",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "makemigrations"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "1-Migration",
+                "order": 1
+            }
+        },
+        {
+            "name": "Migrate",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "migrate"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "1-Migration",
+                "order": 2
+            }
+        },
+
+        // ---------- Commands ----------
+        {
+            "name": "Refresh SA Ratings",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "refresh_sa_ratings"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "2-Commands",
+                "order": 1
+            }
+        },
+        {
+            "name": "Generate Monthly SA Dump",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "sa_ratings_manipulations",
+                "one_csv_per_date",
+                "data_dumps/seeking_alpha/",
+                "data_dumps/seeking_alpha/"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "2-Commands",
+                "order": 2
+            }
+        },
+        {
+            "name": "Import SA Ratings",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "import_sa_ratings",
+                "data_dumps/seeking_alpha/*.csv"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "2-Commands",
+                "order": 3
+            }
+        }
+    ]
+}
