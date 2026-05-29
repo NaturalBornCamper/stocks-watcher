@@ -81,6 +81,47 @@ tr:hover td {
     border-bottom: 2px solid #66b3ff;
 }
 
+/* --- Filter bar (top of score / decayed / momentum / count views) -- */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+    margin: 0 0 1em 0;
+    padding: .4em 0;
+    border-bottom: 1px solid #333;
+}
+.filter-bar label {
+    color: #d4d4d4;
+}
+.filter-bar input[type=number] {
+    background: #2a2a2a;
+    color: #f0f0f0;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: .2em .4em;
+    width: 6em;
+}
+.filter-bar input[type=number]::placeholder {
+    color: #777;
+}
+.filter-bar button {
+    background: #2a2a2a;
+    color: #f0f0f0;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: .25em .8em;
+    cursor: pointer;
+}
+.filter-bar button:hover {
+    background: #3a3a3a;
+    border-color: #66b3ff;
+}
+.filter-hint {
+    color: #777;
+    font-size: 0.9em;
+    margin-left: .5em;
+}
+
 /* --- Date selector (top of /sa/month) ------------------------------- */
 .date-selector {
     margin: 0 0 1em 0;

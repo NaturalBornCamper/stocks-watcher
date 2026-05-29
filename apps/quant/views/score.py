@@ -14,6 +14,49 @@ SA_MODEL_BY_DISPLAY = {
     "score_momentum": CompiledSAScoreMomentum,
 }
 
+# Per-view default minimum score (or count, for the count view) used to hide
+# stocks below the threshold. Different per algorithm because scales differ:
+# all-time scores can reach thousands while a 3-month decayed score caps around 175.
+DEFAULT_MIN_SCORES = {
+    "score": 600,           # all-time cumulative; large numbers
+    "score_decay": 60,      # 3-month exponential decay; max ~175
+    "score_momentum": 30,   # base + 2*momentum; can be negative
+    "count": 10,             # # of months in any category's top-100
+}
+
+
+def _parse_min_score(request, value_to_display):
+    """Read ?min_score=... from the URL.
+    - missing param  -> use per-view default
+    - empty param    -> None (show everything)
+    - invalid param  -> fall back to default
+    Returns (applied_threshold_or_None, value_for_input_field)."""
+    raw = request.GET.get("min_score")
+    if raw is None:
+        default = DEFAULT_MIN_SCORES.get(value_to_display, 0)
+        return default, str(default)
+    if raw == "":
+        return None, ""
+    try:
+        return int(raw), raw
+    except ValueError:
+        default = DEFAULT_MIN_SCORES.get(value_to_display, 0)
+        return default, str(default)
+
+
+def _sort_context(request):
+    """Read sort/dir from the URL and build a query string fragment to carry
+    them in menu links (preserves the user's chosen sort across view switches)."""
+    sort = request.GET.get("sort")
+    direction = request.GET.get("dir")
+    if sort is None:
+        return {"sort_param": None, "dir_param": None, "sort_query": ""}
+    return {
+        "sort_param": sort,
+        "dir_param": direction or "asc",
+        "sort_query": f"?sort={sort}&dir={direction or 'asc'}",
+    }
+
 DEFAULT_PER_PAGE = 20
 INDEX_SCORE = 0
 INDEX_COUNT = 1
@@ -82,12 +125,24 @@ def score_or_count(request, value_to_display="score"):
             "count": compiled_sa_stock_type.count,
         }
 
-    # pprint(quant_list)
+    # Filter: hide stocks below the threshold. The filter applies to any cell's
+    # score (or count, on the count view); a stock with even one cell at/above
+    # the threshold stays visible.
+    min_score, min_score_input = _parse_min_score(request, value_to_display)
+    if min_score is not None and min_score > 0:
+        filter_key = "count" if value_to_display == "count" else "score"
+        quant_list = {
+            sym: stock for sym, stock in quant_list.items()
+            if any(t[filter_key] >= min_score for t in stock["types"].values())
+        }
 
     template = loader.get_template("score_and_count.html")
     context = {
         "quant_list": quant_list,
         "value_to_display": value_to_display,
+        "min_score_input": min_score_input,
+        "min_score_default": DEFAULT_MIN_SCORES.get(value_to_display, 0),
+        **_sort_context(request),
     }
     return HttpResponse(template.render(context, request))
 
@@ -158,5 +213,6 @@ def month_view(request, date_str=None):
         "value_to_display": "rank",
         "available_dates": available_dates,
         "chosen_date": chosen_date,
+        **_sort_context(request),
     }
     return HttpResponse(template.render(context, request))

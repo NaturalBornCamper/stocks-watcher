@@ -1,5 +1,16 @@
 {% extends 'seeking_alpha.html' %}
 
 {% block sa_content %}
+    <form method="GET" class="filter-bar">
+        <label for="min_score">Min score:</label>
+        <input id="min_score" type="number" name="min_score"
+               value="{{ min_score_input }}"
+               placeholder="default {{ min_score_default }}">
+        <button type="submit">Apply</button>
+        <span class="filter-hint">Leave blank to show all stocks.</span>
+        {# Carry the current sort across the form submit so it isn't reset. #}
+        {% if sort_param %}<input type="hidden" name="sort" value="{{ sort_param }}">{% endif %}
+        {% if dir_param %}<input type="hidden" name="dir" value="{{ dir_param }}">{% endif %}
+    </form>
     {% include "datatables/h.category-v.stock.html" with data=quant_list value_to_display=value_to_display %}
 {% endblock %}

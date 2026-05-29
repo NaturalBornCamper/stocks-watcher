@@ -1,21 +1,24 @@
 {# Horizontal nav for the Seeking Alpha compiled-score views.                          #}
 {# Active link is highlighted by comparing the current URL name to each entry's name. #}
 {# Styles live in static/css/style.css (.sa-menu rules).                               #}
+{# `sort_query` (built in the view) carries ?sort/&dir across view switches so the     #}
+{# user's column sort survives changing algorithms. min_score is intentionally NOT     #}
+{# carried -- scales differ per algorithm, so each view starts at its own default.     #}
 <nav class="sa-menu">
     {% with current=request.resolver_match.url_name %}
-        <a href="{% url 'quant.sa.score' %}"
+        <a href="{% url 'quant.sa.score' %}{{ sort_query }}"
            title="Cumulative all-time score (sum of 101 − rank over every month). Long-term, low-turnover picks."
            class="{% if current == 'quant.sa.score' or current == 'quant.sa' %}active{% endif %}">Score</a>
-        <a href="{% url 'quant.sa.score_decay' %}"
+        <a href="{% url 'quant.sa.score_decay' %}{{ sort_query }}"
            title="Recent-months score, last 3 months weighted [1.0, 0.5, 0.25]. Responsive — drops stocks that fade."
            class="{% if current == 'quant.sa.score_decay' %}active{% endif %}">Decayed</a>
-        <a href="{% url 'quant.sa.score_momentum' %}"
+        <a href="{% url 'quant.sa.score_momentum' %}{{ sort_query }}"
            title="Rewards stocks whose ranks are rising fast. Designed to catch breakouts; weakest in backtests so far."
            class="{% if current == 'quant.sa.score_momentum' %}active{% endif %}">Momentum</a>
-        <a href="{% url 'quant.sa.count' %}"
+        <a href="{% url 'quant.sa.count' %}{{ sort_query }}"
            title="How many times each stock has appeared in each category's top-100 (presence count, ignores rank)."
            class="{% if current == 'quant.sa.count' %}active{% endif %}">Count</a>
-        <a href="{% url 'quant.sa.month' %}"
+        <a href="{% url 'quant.sa.month' %}{{ sort_query }}"
            title="Drill into a single month's actual ranks (rank + historical count). Pick any month from the date selector."
            class="{% if current == 'quant.sa.month' or current == 'quant.sa.month_date' %}active{% endif %}">Month</a>
     {% endwith %}

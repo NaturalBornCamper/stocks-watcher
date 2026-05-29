@@ -4,7 +4,7 @@
     <nav class="date-selector">
         <span class="date-selector-label">Month:</span>
         {% for d in available_dates %}
-            <a href="{% url 'quant.sa.month_date' date_str=d|date:'Y-m' %}"
+            <a href="{% url 'quant.sa.month_date' date_str=d|date:'Y-m' %}{{ sort_query }}"
                class="{% if d == chosen_date %}active{% endif %}">{{ d|date:'Y-m' }}</a>
         {% endfor %}
     </nav>
