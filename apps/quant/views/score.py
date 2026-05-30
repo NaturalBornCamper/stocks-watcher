@@ -44,17 +44,36 @@ def _parse_min_score(request, value_to_display):
         return default, str(default)
 
 
-def _sort_context(request):
-    """Read sort/dir from the URL and build a query string fragment to carry
-    them in menu links (preserves the user's chosen sort across view switches)."""
+def _carry_context(request):
+    """Read URL params that should carry across view switches (sort, gating
+    filters) and build a query-string fragment for menu/date-selector links.
+    min_score is deliberately NOT carried -- its scale differs per algorithm."""
+    from urllib.parse import urlencode
+
     sort = request.GET.get("sort")
     direction = request.GET.get("dir")
-    if sort is None:
-        return {"sort_param": None, "dir_param": None, "sort_query": ""}
+    hide_red = request.GET.get("hide_red") == "1"
+    hide_orange = request.GET.get("hide_orange") == "1"
+    hide_yellow = request.GET.get("hide_yellow") == "1"
+
+    params = {}
+    if sort is not None:
+        params["sort"] = sort
+        params["dir"] = direction or "asc"
+    if hide_red:
+        params["hide_red"] = "1"
+    if hide_orange:
+        params["hide_orange"] = "1"
+    if hide_yellow:
+        params["hide_yellow"] = "1"
+
     return {
         "sort_param": sort,
-        "dir_param": direction or "asc",
-        "sort_query": f"?sort={sort}&dir={direction or 'asc'}",
+        "dir_param": (direction or "asc") if sort is not None else None,
+        "hide_red": hide_red,
+        "hide_orange": hide_orange,
+        "hide_yellow": hide_yellow,
+        "carry_query": ("?" + urlencode(params)) if params else "",
     }
 
 DEFAULT_PER_PAGE = 20
@@ -136,13 +155,18 @@ def score_or_count(request, value_to_display="score"):
             if any(t[filter_key] >= min_score for t in stock["types"].values())
         }
 
+    # Note: the hide_red / hide_orange / hide_yellow flags are NOT applied here.
+    # They are live (no Apply button), so all rows are sent and the checkbox state
+    # is toggled via CSS classes by static/js/gated-filter.js. The server still
+    # reads the params via _carry_context so menu links and the checkbox `checked`
+    # state stay consistent on initial load.
     template = loader.get_template("score_and_count.html")
     context = {
         "quant_list": quant_list,
         "value_to_display": value_to_display,
         "min_score_input": min_score_input,
         "min_score_default": DEFAULT_MIN_SCORES.get(value_to_display, 0),
-        **_sort_context(request),
+        **_carry_context(request),
     }
     return HttpResponse(template.render(context, request))
 
@@ -213,6 +237,6 @@ def month_view(request, date_str=None):
         "value_to_display": "rank",
         "available_dates": available_dates,
         "chosen_date": chosen_date,
-        **_sort_context(request),
+        **_carry_context(request),
     }
     return HttpResponse(template.render(context, request))

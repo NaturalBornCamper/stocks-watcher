@@ -1,16 +1,43 @@
 {% extends 'seeking_alpha.html' %}
 
 {% block sa_content %}
-    <form method="GET" class="filter-bar">
-        <label for="min_score">Min score:</label>
-        <input id="min_score" type="number" name="min_score"
-               value="{{ min_score_input }}"
-               placeholder="default {{ min_score_default }}">
-        <button type="submit">Apply</button>
-        <span class="filter-hint">Leave blank to show all stocks.</span>
-        {# Carry the current sort across the form submit so it isn't reset. #}
-        {% if sort_param %}<input type="hidden" name="sort" value="{{ sort_param }}">{% endif %}
-        {% if dir_param %}<input type="hidden" name="dir" value="{{ dir_param }}">{% endif %}
-    </form>
-    {% include "datatables/h.category-v.stock.html" with data=quant_list value_to_display=value_to_display %}
+    {# Wrapper carries the "hide-gated-X" CSS classes that hide rows on initial    #}
+    {# load (no FOUC). gated-filter.js toggles these classes when checkboxes flip. #}
+    <div class="sa-filtered{% if hide_red %} hide-gated-red{% endif %}{% if hide_orange %} hide-gated-orange{% endif %}{% if hide_yellow %} hide-gated-yellow{% endif %}">
+
+        {# Applyable filter: numeric, takes effect only when "Apply" is clicked. #}
+        <form method="GET" class="filter-bar">
+            <label for="min_score">Min score:</label>
+            <input id="min_score" type="number" name="min_score"
+                   value="{{ min_score_input }}"
+                   placeholder="default {{ min_score_default }}">
+            <button type="submit">Apply</button>
+            <span class="filter-hint">Leave blank to show all stocks.</span>
+
+            {# Hidden inputs preserve sort + gated filters across the Apply submit.   #}
+            {# gated-filter.js keeps the hide_* hiddens in sync with the checkboxes.  #}
+            {% if sort_param %}<input type="hidden" name="sort" value="{{ sort_param }}">{% endif %}
+            {% if dir_param %}<input type="hidden" name="dir" value="{{ dir_param }}">{% endif %}
+            {% if hide_red %}<input type="hidden" name="hide_red" value="1">{% endif %}
+            {% if hide_orange %}<input type="hidden" name="hide_orange" value="1">{% endif %}
+            {% if hide_yellow %}<input type="hidden" name="hide_yellow" value="1">{% endif %}
+        </form>
+
+        {# Live filter: takes effect the instant a checkbox is toggled, no submit. #}
+        <div class="live-filter">
+            <span class="live-filter-label">Hide gated:</span>
+            <label class="filter-check check-red">
+                <input type="checkbox" name="hide_red" value="1" {% if hide_red %}checked{% endif %}> red
+            </label>
+            <label class="filter-check check-orange">
+                <input type="checkbox" name="hide_orange" value="1" {% if hide_orange %}checked{% endif %}> orange
+            </label>
+            <label class="filter-check check-yellow">
+                <input type="checkbox" name="hide_yellow" value="1" {% if hide_yellow %}checked{% endif %}> yellow
+            </label>
+            <span class="filter-hint live-filter-hint">Live &mdash; no Apply needed.</span>
+        </div>
+
+        {% include "datatables/h.category-v.stock.html" with data=quant_list value_to_display=value_to_display %}
+    </div>
 {% endblock %}

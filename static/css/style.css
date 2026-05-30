@@ -4,6 +4,14 @@
    The Django admin has its own templates and is intentionally NOT affected.
    ===================================================================== */
 
+:root {
+    /* Gating row colours. Defined here so swatches in the filter bar and
+       row backgrounds in the data tables always match. */
+    --gated-red:    #8b1f1f;
+    --gated-orange: #9c5c1a;
+    --gated-yellow: #8a751c;
+}
+
 /* --- Page chrome ---------------------------------------------------- */
 body {
     background: #1a1a1a;
@@ -122,6 +130,77 @@ tr:hover td {
     margin-left: .5em;
 }
 
+/* --- Live filter bar (gated-row checkboxes -- no Apply button) ------ */
+/* Visually distinct from .filter-bar above so users can tell at a glance that  */
+/* checkbox changes take effect instantly and don't need a submit.              */
+.live-filter {
+    display: flex;
+    align-items: center;
+    gap: .8em;
+    margin: 0 0 1em 0;
+    padding: .3em .6em;
+    background: #222;
+    border: 1px dashed #444;
+    border-radius: 3px;
+    font-size: 0.92em;
+}
+.live-filter-label {
+    color: #888;
+    font-style: italic;
+    margin-right: .2em;
+}
+.live-filter-hint {
+    margin-left: auto;
+    font-style: italic;
+}
+.filter-check {
+    display: inline-flex;
+    align-items: center;
+    gap: .4em;
+    margin-right: 1.4em;
+    cursor: pointer;
+    user-select: none;
+}
+/* Custom checkbox so the gated colour always shows (a native checkbox only      */
+/* tints via accent-color once checked). --c is set per colour below.            */
+.filter-check input[type=checkbox] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1em;
+    height: 1em;
+    margin: 0;
+    border: 2px solid var(--c);
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+}
+.filter-check input[type=checkbox]:checked {
+    background: var(--c);
+}
+/* White tick drawn with a CSS border when checked, centred in the box. */
+.filter-check input[type=checkbox]:checked::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: .25em;
+    height: .55em;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+}
+/* Colour both the box and its label text to match the gated row it hides. */
+.filter-check.check-red    { --c: var(--gated-red);    color: var(--gated-red); }
+.filter-check.check-orange { --c: var(--gated-orange); color: var(--gated-orange); }
+.filter-check.check-yellow { --c: var(--gated-yellow); color: var(--gated-yellow); }
+
+/* Wrapper classes toggled by gated-filter.js: hide rows of matching color.    */
+/* Set server-side too (from URL params) so initial render has no FOUC.        */
+.sa-filtered.hide-gated-red    tr.gated-red    { display: none; }
+.sa-filtered.hide-gated-orange tr.gated-orange { display: none; }
+.sa-filtered.hide-gated-yellow tr.gated-yellow { display: none; }
+
 /* --- Date selector (top of /sa/month) ------------------------------- */
 .date-selector {
     margin: 0 0 1em 0;
@@ -157,9 +236,9 @@ tr:hover td {
 /* RED    = stock missing from BOTH this month's and last month's SA ratings (gone 2+ months) */
 /* ORANGE = stock missing from this month's SA ratings (just dropped out)                     */
 /* YELLOW = stock back in this month's SA ratings after being out last month                  */
-tr.gated-red    td { background: #8b1f1f; }
-tr.gated-orange td { background: #9c5c1a; }
-tr.gated-yellow td { background: #8a751c; }
+tr.gated-red    td { background: var(--gated-red); }
+tr.gated-orange td { background: var(--gated-orange); }
+tr.gated-yellow td { background: var(--gated-yellow); }
 
 tr.gated-red:hover    td { background: #a82828; }
 tr.gated-orange:hover td { background: #b86c20; }

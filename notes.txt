@@ -27,15 +27,10 @@ Bonus (Optional Enhancements)
 
 
 -PRIORITIZE
--Add sort order in url when clicking it (query param), along with all future filters with checkboxes, so that changing date or category re-sorts the same
--Make missing run configurations and just like game library, make them for VS code too
- check if Claude.md specifies run configs should be added for both
- Link run configs from Games library for inspiration
 -Urgent Quant issue: Symbol or name change, or merge with other company breaks history. Find a solution, maybe ask AI for ideas
  Symbol changes in data dumps causes issues. For example when a top stock (SCZMF) changed to SCZMD, the system thought it was 2 different stocks so the score was reset.
 -Make the other quant views
  https://docs.djangoproject.com/en/5.0/topics/http/urls/#passing-extra-options-to-view-functions
- Add checkbox to hide gated stocks
  Quant page for a month, so I can basically see the same data as Excel, but split it different tables on the same page instead of one long table
   show all category, with checkboxes to hide/show them
  Average "quant" column of the Quant table for each stock instead of my own custom score
@@ -52,7 +47,6 @@ Bonus (Optional Enhancements)
  Filter/search for stock
  (All these filters and options will be different according to the quant view also)
 -Alert system to send email when a stock that I "favorited" (I have in my portfolio) has been gated out
--To speed page sorting up, have checkbox to only show stocks with a score of at least X (50?) in any column
 
 
 EASY AND QUICK:
