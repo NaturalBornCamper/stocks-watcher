@@ -113,7 +113,7 @@
             }
         },
         {
-            "name": "Import SA Ratings",
+            "name": "Import All SA Ratings in folder",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",

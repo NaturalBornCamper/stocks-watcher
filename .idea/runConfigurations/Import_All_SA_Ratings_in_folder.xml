@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Import SA Ratings" type="PythonConfigurationType" factoryName="Python" folderName="Commands">
+  <configuration default="false" name="Import All SA Ratings in folder" type="PythonConfigurationType" factoryName="Python" folderName="Commands">
     <module name="Stocks Watcher" />
     <option name="ENV_FILES" value="$PROJECT_DIR$/.env" />
     <option name="INTERPRETER_OPTIONS" value="" />
