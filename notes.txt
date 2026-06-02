@@ -29,10 +29,6 @@ Bonus (Optional Enhancements)
 -PRIORITIZE
 -Urgent Quant issue: Symbol or name change, or merge with other company breaks history. Find a solution, maybe ask AI for ideas
  Symbol changes in data dumps causes issues. For example when a top stock (SCZMF) changed to SCZMD, the system thought it was 2 different stocks so the score was reset.
--Quant view additions
- Filter/search for stock
- (All these filters and options will be different according to the quant view also)
- Checkboxes to show/hide categories
 -Make the other quant views
  What was this for? Check
   https://docs.djangoproject.com/en/5.0/topics/http/urls/#passing-extra-options-to-view-functions

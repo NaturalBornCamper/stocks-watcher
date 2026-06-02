@@ -201,6 +201,30 @@ tr:hover td {
 .sa-filtered.hide-gated-orange tr.gated-orange { display: none; }
 .sa-filtered.hide-gated-yellow tr.gated-yellow { display: none; }
 
+/* "Filter:" label sits to the right of the gated checkboxes -- a wider gap   */
+/* (and a divider) separates the two filter groups sharing this one line.      */
+.name-filter-label {
+    margin-left: .6em;
+    padding-left: 1.2em;
+    border-left: 1px solid #444;
+}
+/* Text search field in the live-filter bar (symbol / company name). */
+.name-filter-input {
+    background: #2a2a2a;
+    color: #f0f0f0;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: .2em .4em;
+    width: 14em;
+}
+.name-filter-input::placeholder {
+    color: #777;
+}
+
+/* Rows hidden by the live text filter (name-filter.js). Same display:none as  */
+/* the gated rules above, so the two filters stack without fighting.           */
+tr.name-filtered-out { display: none; }
+
 /* --- Date selector (top of /sa/month) ------------------------------- */
 .date-selector {
     margin: 0 0 1em 0;

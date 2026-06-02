@@ -23,19 +23,27 @@
             {% if hide_yellow %}<input type="hidden" name="hide_yellow" value="1">{% endif %}
         </form>
 
-        {# Live filter: takes effect the instant a checkbox is toggled, no submit. #}
+        {# Live filters on one line: gated checkboxes + text search. Both take    #}
+        {# effect instantly, no submit. The text search is client-side only and   #}
+        {# is not carried in the URL (see name-filter.js).                        #}
         <div class="live-filter">
             <span class="live-filter-label">Hide gated:</span>
-            <label class="filter-check check-red">
+            <label class="filter-check check-red"
+                   title="Gone from SA ratings this month AND last month (corpse risk).">
                 <input type="checkbox" name="hide_red" value="1" {% if hide_red %}checked{% endif %}> red
             </label>
-            <label class="filter-check check-orange">
+            <label class="filter-check check-orange"
+                   title="Just dropped out of SA ratings this month.">
                 <input type="checkbox" name="hide_orange" value="1" {% if hide_orange %}checked{% endif %}> orange
             </label>
-            <label class="filter-check check-yellow">
+            <label class="filter-check check-yellow"
+                   title="Was out last month, back in SA ratings this month.">
                 <input type="checkbox" name="hide_yellow" value="1" {% if hide_yellow %}checked{% endif %}> yellow
             </label>
-            <span class="filter-hint live-filter-hint">Live &mdash; no Apply needed.</span>
+
+            <label class="live-filter-label name-filter-label" for="name_filter">Filter:</label>
+            <input id="name_filter" type="text" class="name-filter-input"
+                   placeholder="symbol or company name" autocomplete="off">
         </div>
 
         {% include "datatables/h.category-v.stock.html" with data=quant_list value_to_display=value_to_display %}
