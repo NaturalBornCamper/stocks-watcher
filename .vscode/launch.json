@@ -133,6 +133,69 @@
                 "group": "2-Commands",
                 "order": 3
             }
+        },
+        {
+            "name": "Compile SA Score",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "compile_sa_score"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "3-Score Compilation",
+                "order": 1
+            }
+        },
+        {
+            "name": "Compile SA Score Decayed",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "compile_sa_score_decayed"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "3-Score Compilation",
+                "order": 2
+            }
+        },
+        {
+            "name": "Compile SA Score Momentum",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "compile_sa_score_momentum"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "3-Score Compilation",
+                "order": 3
+            }
         }
     ]
 }

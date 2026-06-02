@@ -23,11 +23,11 @@ Run configurations live in **two parallel files** that must always be kept in sy
 - PyCharm: `.idea/runConfigurations/<Name>.xml` (one file per entry)
 - VS Code: `.vscode/launch.json` (single file with one entry per configuration)
 
-Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`Migration` ↔ `1-Migration`, `Commands` ↔ `2-Commands`; future `Tests` would map to `3-Tests`). Order numbers in `presentation.order` should be unique within a group.
+Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`Migration` ↔ `1-Migration`, `Commands` ↔ `2-Commands`, `Score Compilation` ↔ `3-Score Compilation`; future `Tests` would map to `4-Tests`). Order numbers in `presentation.order` should be unique within a group.
 
 Secrets / API keys do **not** belong in these files. Both PyCharm and VS Code load `.env` (gitignored) — PyCharm via `<option name="ENV_FILES" value="$PROJECT_DIR$/.env" />`, VS Code via `"envFile": "${workspaceFolder}/.env"`. Only `PYTHONUNBUFFERED` and `DJANGO_SETTINGS_MODULE` should stay in the run-config env (they are tied to run mode, not to the machine).
 
-When tests eventually exist (none yet), follow the Games Library pattern: one config per test module under a `Tests` / `3-Tests` group, plus an umbrella "Run ALL Tests" entry that must be updated whenever a new test module is added.
+When tests eventually exist (none yet), follow the Games Library pattern: one config per test module under a `Tests` / `4-Tests` group, plus an umbrella "Run ALL Tests" entry that must be updated whenever a new test module is added.
 
 ## Development Commands
 
@@ -49,6 +49,16 @@ python manage.py import_sa_ratings "data_dumps/seeking_alpha/*.csv"
 # Reorganise raw SA dump CSVs into one CSV per date ("Generate Monthly SA Dump")
 python manage.py sa_ratings_manipulations one_csv_per_date \
     "data_dumps/seeking_alpha/" "data_dumps/seeking_alpha/"
+
+# Compile per-stock scores after a new ratings dump. Each command skips rating
+# types already up to date for the latest dump. Run on a schedule via the cron
+# runner (resources/run-cronjob.sh) -- see "Cron jobs" below. Run configs:
+# "Compile SA Score" / "Compile SA Score Decayed" / "Compile SA Score Momentum".
+python manage.py compile_sa_score                              # all-time cumulative
+python manage.py compile_sa_score_decayed                      # recent-months decay
+python manage.py compile_sa_score_momentum                     # momentum / rising stars
+# Optional tuning flags (defaults come from the compiled-model constants):
+#   --limit N  --decay-months N  --decay-base F  --window-months N  --momentum-weight F
 
 # Research backtest comparing scoring algorithms (NOT a routine user command --
 # Claude runs this when investigating algorithm tweaks; output -> quant_simulations/)
@@ -77,7 +87,7 @@ URL prefixes (project `urls.py`):
 
 **`apps/quant/`** — Seeking Alpha ratings, scoring algorithms, and the main frontend grids.
 - Models: `SAStock`, `SARating`, `CompiledSAScore`, `CompiledSAScoreDecayed`, `CompiledSAScoreMomentum`.
-- Cron endpoints under `/quant/cron/compile_sa_score_*/` recompile per-stock scores when a new ratings dump is detected. Each endpoint skips rating types already up to date for the latest dump.
+- Score compiling lives in the `compile_sa_score*` management commands (`apps/quant/management/commands/`), triggered on a schedule by the cron runner. Each command skips rating types already up to date for the latest dump. Shared date/query helpers are in `apps/quant/scoring.py`. The old `/quant/cron/compile_sa_score_*/` URLs still work as thin wrappers (`apps/quant/views/cron.py`) that forward query params to the matching command and return its output as text.
 - Frontend views (`apps/quant/views/score.py`):
   - `/quant/sa/score` — all-time cumulative score
   - `/quant/sa/score_decayed` — recent-months exponential decay
@@ -108,6 +118,24 @@ Tuning knobs (e.g. `DECAY_BASE`, `WINDOW_MONTHS`, `MOMENTUM_WEIGHT`) live as cla
 - Table sort JS at `static/js/table-sort.js`, loaded globally from `base.html`. Looks for `<table class="sortable">` and wires click-to-sort with ▲ / ▼ indicators on the active header. Pre-extracts values once per sort and applies the new order via a single `DocumentFragment` append.
 - SA-ratings nav: template partial `_sa_ratings_menu.html`, included from `seeking_alpha.html`. Each link has a `title` tooltip explaining what its score does.
 - Gating row colours (red / orange / yellow) on the score/decayed/momentum/count views indicate stocks missing from this month's and/or last month's SA ratings — see `apps/quant/views/score.py:score_or_count` for the rules. They are most informative on the all-time `score` view (corpse risk).
+
+### Cron jobs
+
+Scheduled jobs run as management commands, not browser URLs. The generic runner
+`resources/run-cronjob.sh` is deployed to the server and called like:
+
+```bash
+$HOME/tools/run-cronjob.sh stocks-watcher compile_sa_score_decayed --limit=5
+```
+
+It runs `manage.py <command> [args...]`, auto-adds `--settings=settings.production`,
+and writes a rotating per-job log to `<app>/logs/<command>.log` (stdout + stderr).
+Because the runner captures stdout, commands should write progress with
+`self.stdout.write(...)` / `self.style.SUCCESS(...)`, not bare `print`.
+
+The quant score crons (`compile_sa_score`, `compile_sa_score_decayed`,
+`compile_sa_score_momentum`) are migrated. The watcher crons (`fetch_prices`,
+`send_alerts`) are still browser-only views and can follow the same pattern.
 
 ### Simulations / backtests
 

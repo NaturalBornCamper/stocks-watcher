@@ -37,7 +37,7 @@ import requests
 from django.core.management.base import BaseCommand
 
 from apps.quant.models import SARating, SAStock
-from apps.quant.views.cron import get_distance_in_months, rewind_months
+from apps.quant.scoring import get_distance_in_months, rewind_months
 
 CATEGORIES = [
     "top_rated_overall", "top_quant", "top_growth", "top_value",
