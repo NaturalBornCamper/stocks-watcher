@@ -196,6 +196,50 @@
                 "group": "3-Score Compilation",
                 "order": 3
             }
+        },
+
+        // ---------- Price Watcher ----------
+        {
+            "name": "Fetch Prices",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "fetch_prices"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "4-Price Watcher",
+                "order": 1
+            }
+        },
+        {
+            "name": "Send Alerts",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "send_alerts"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "4-Price Watcher",
+                "order": 2
+            }
         }
     ]
 }

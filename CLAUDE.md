@@ -23,11 +23,11 @@ Run configurations live in **two parallel files** that must always be kept in sy
 - PyCharm: `.idea/runConfigurations/<Name>.xml` (one file per entry)
 - VS Code: `.vscode/launch.json` (single file with one entry per configuration)
 
-Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`Migration` ↔ `1-Migration`, `Commands` ↔ `2-Commands`, `Score Compilation` ↔ `3-Score Compilation`; future `Tests` would map to `4-Tests`). Order numbers in `presentation.order` should be unique within a group.
+Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`Migration` ↔ `1-Migration`, `Commands` ↔ `2-Commands`, `Score Compilation` ↔ `3-Score Compilation`, `Price Watcher` ↔ `4-Price Watcher`; future `Tests` would map to `5-Tests`). Order numbers in `presentation.order` should be unique within a group.
 
 Secrets / API keys do **not** belong in these files. Both PyCharm and VS Code load `.env` (gitignored) — PyCharm via `<option name="ENV_FILES" value="$PROJECT_DIR$/.env" />`, VS Code via `"envFile": "${workspaceFolder}/.env"`. Only `PYTHONUNBUFFERED` and `DJANGO_SETTINGS_MODULE` should stay in the run-config env (they are tied to run mode, not to the machine).
 
-When tests eventually exist (none yet), follow the Games Library pattern: one config per test module under a `Tests` / `4-Tests` group, plus an umbrella "Run ALL Tests" entry that must be updated whenever a new test module is added.
+When tests eventually exist (none yet), follow the Games Library pattern: one config per test module under a `Tests` / `5-Tests` group, plus an umbrella "Run ALL Tests" entry that must be updated whenever a new test module is added.
 
 ## Development Commands
 
@@ -59,6 +59,11 @@ python manage.py compile_sa_score_decayed                      # recent-months d
 python manage.py compile_sa_score_momentum                     # momentum / rising stars
 # Optional tuning flags (defaults come from the compiled-model constants):
 #   --limit N  --decay-months N  --decay-base F  --window-months N  --momentum-weight F
+
+# Price-watcher crons. Run on a schedule via the cron runner -- see "Cron jobs".
+# Run configs: "Fetch Prices" / "Send Alerts".
+python manage.py fetch_prices                                  # download due stocks' latest prices (--limit N)
+python manage.py send_alerts                                   # email any price alerts that fired
 
 # Research backtest comparing scoring algorithms (NOT a routine user command --
 # Claude runs this when investigating algorithm tweaks; output -> quant_simulations/)
@@ -133,9 +138,12 @@ and writes a rotating per-job log to `<app>/logs/<command>.log` (stdout + stderr
 Because the runner captures stdout, commands should write progress with
 `self.stdout.write(...)` / `self.style.SUCCESS(...)`, not bare `print`.
 
-The quant score crons (`compile_sa_score`, `compile_sa_score_decayed`,
-`compile_sa_score_momentum`) are migrated. The watcher crons (`fetch_prices`,
-`send_alerts`) are still browser-only views and can follow the same pattern.
+All five crons are migrated to commands: quant scores (`compile_sa_score`,
+`compile_sa_score_decayed`, `compile_sa_score_momentum`) and watcher
+(`fetch_prices`, `send_alerts`). Their old `/cron/...` URLs still work as thin
+wrappers (`apps/*/views/cron.py`) that forward query params to the command.
+Shared bits live next to each app: `apps/quant/scoring.py` and
+`apps/watcher/notifications.py` (the `send_email` helper).
 
 ### Simulations / backtests
 
