@@ -1,3 +1,3 @@
 pyrotools                               # For debugging
-django ~= 5.2                           # Framework
-requests ~= 2.31                        # API client to make requests to other APIs
+django ~= 6.0                           # Framework
+requests ~= 2.34                        # API client to make requests to other APIs

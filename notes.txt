@@ -30,8 +30,6 @@ Bonus (Optional Enhancements)
 -Urgent Quant issue: Symbol or name change, or merge with other company breaks history. Find a solution, maybe ask AI for ideas
  Symbol changes in data dumps causes issues. For example when a top stock (SCZMF) changed to SCZMD, the system thought it was 2 different stocks so the score was reset.
 -Make the other quant views
- What was this for? Check
-  https://docs.djangoproject.com/en/5.0/topics/http/urls/#passing-extra-options-to-view-functions
  Quant page for a month, so I can basically see the same data as Excel, but split in different tables on the same page instead of one long table
   show all category, with checkboxes to hide/show them
  Average "quant" column of the Quant table for each stock instead of my own custom score
