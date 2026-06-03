@@ -10,6 +10,7 @@ from apps.watcher.providers.alpha_vantage_rapidapi import AlphaVantageRapidAPI
 from apps.watcher.providers.eodhd import EODHD
 from apps.watcher.providers.marketstack import MarketStack
 from apps.watcher.providers.mboum import Mboum
+from apps.watcher.providers.yahoo import Yahoo
 from constants import CURRENCY_USD
 from settings.base import EMAIL_DEFAULT_RECIPIENT
 
@@ -66,6 +67,7 @@ class Command(BaseCommand):
 
         # APIS to try in order, until successful
         usd_apis = [
+            Yahoo,  # No key, no documented limit, adjusted close, includes TSX (.TO). Same source as the backtest
             AlphaVantageRapidAPI,  # 5/minute, 500/day, adjusted close works with free
             #        financialmodelingprep,  # 250/day, US only, No provider setup yet, but account already made. Before alpha_vantage?
             Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
@@ -81,6 +83,7 @@ class Command(BaseCommand):
         ]
 
         cad_apis = [
+            Yahoo,  # No key, no documented limit, adjusted close, TSX via .TO suffix. Same source as the backtest
             Mboum,  # Rapid API, 500/month, have TSX also https://rapidapi.com/sparior/api/mboum-finance, 10 years data
             # AlphaVantage,  # 5/minute, 500/day, adjusted close seems for premium
             MarketStack,  # 100/month, markets all over the world

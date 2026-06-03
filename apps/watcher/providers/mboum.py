@@ -13,6 +13,13 @@ class Mboum(AbstractBaseProvider):
     BASE_URL = "https://mboum-finance.p.rapidapi.com/hi/history"
     CAD_SUFFIX = ".TO"
 
+    # NOTE: get_full_price_history has NO effect here. This endpoint has no range/period
+    #  parameter -- the amount of history is fixed by `interval`. With interval=1d it always
+    #  returns ~5 years (confirmed against the live API and the docs), so Mboum always fetches
+    #  full history. That's harmless: bulk_create(ignore_conflicts=True) drops the duplicate
+    #  dates on daily runs. To actually shorten the window you'd need the v2 endpoint
+    #  (/v2/markets/stock/history), which has a `limit` (1-1000 candles) param instead.
+
     # TODO MBOUM changed "items" to "body", then the date format changed.. my whole system stopped working because of exception.
     #  So make everything safe, with try/except and test if the API crashes or gives weird json, or json changes again
     #   I already did most actually, just make sure other things don't crash, like when reading the date format
