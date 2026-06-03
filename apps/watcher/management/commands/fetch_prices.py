@@ -15,7 +15,7 @@ from constants import CURRENCY_USD
 from settings.base import EMAIL_DEFAULT_RECIPIENT
 
 MAX_API_QUERY = 5
-MIN_SECONDS_BETWEEN_API_CALLS = 15
+MIN_SECONDS_BETWEEN_API_CALLS = 20
 
 
 # TODO Find a way to not update stock last fetch date if updated before 5pm (closing price not available yet). Change field to datetime and look if less than 5pm instead?
