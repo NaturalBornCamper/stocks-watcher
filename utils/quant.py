@@ -15,6 +15,7 @@ class Columns:
     PROFITABILITY = "Profitability"
     MOMENTUM = "Momentum"
     EPS_REVISION = "EPS Revision"
+    CIK = "CIK"
 
 
 COLUMN_NAME_VARIANTS = {
@@ -33,6 +34,7 @@ COLUMN_NAME_VARIANTS = {
     Columns.PROFITABILITY: [Columns.PROFITABILITY, "Profitability"],
     Columns.MOMENTUM: [Columns.MOMENTUM, "Momentum"],
     Columns.EPS_REVISION: [Columns.EPS_REVISION, "EPS Rev."],
+    Columns.CIK: [Columns.CIK, "Permanent ID", "SEC CIK"],
 }
 
 def find_matching_value(row: dict, possible_names: list) -> str:

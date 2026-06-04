@@ -8,6 +8,8 @@ from django.core.management.base import BaseCommand
 
 from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
 from apps.quant.models import SAStock, SARating
+from apps.quant.edgar import load_ticker_to_cik, normalize_ticker
+from apps.quant.symbol_matching import find_same_company, review_for_match, normalize_company_name
 
 # python manage.py import_sa_ratings /path/to/your/csv_file.csv
 # python manage.py import_sa_ratings "SA Rating Dumps/2025-02-01.csv"
@@ -79,14 +81,27 @@ class Command(BaseCommand):
             path = pathlib.Path(options['csv_file'])
             base_dir = path.parent
             pattern = path.name
-            files_to_import = list(base_dir.rglob(pattern))
+            # Sort so dumps import oldest-first; this lets us spot a company that
+            # changed ticker (its old symbol is already in the DB by then). Skip
+            # "_"-prefixed helper files such as _symbol_renames.csv.
+            files_to_import = sorted(f for f in base_dir.rglob(pattern) if not f.name.startswith("_"))
         else:
             files_to_import.append(options['csv_file'])
+
+        # SEC ticker -> CIK map, plus in-memory lookups of stocks we already know,
+        # so we can tell when a "new" ticker is really an existing company.
+        ticker_to_cik = load_ticker_to_cik()
+        stocks_by_cik = {}
+        stocks_by_name = {}
+        for stock in SAStock.objects.all():
+            if stock.external_id:
+                stocks_by_cik.setdefault(stock.external_id, stock)
+            stocks_by_name.setdefault(normalize_company_name(stock.name), stock)
 
         files_imported = 0
         for csv_file in files_to_import:
             try:
-                with open(csv_file, 'r') as file:
+                with open(csv_file, 'r', encoding='utf-8') as file:
                     csv_reader = csv.DictReader(file)
 
                     sa_ratings_list = []
@@ -99,11 +114,20 @@ class Command(BaseCommand):
                         for col_name, possible_names in COLUMN_NAME_VARIANTS.items():
                             new_row[col_name] = find_matching_value(row, possible_names)
 
-                        # If no date in column, use current date
-                        sa_rating.sa_stock, created = SAStock.objects.get_or_create(
+                        sa_stock, created = SAStock.objects.get_or_create(
                             symbol=new_row[Columns.SEEKINGALPHA_SYMBOL],
                             defaults={"name": new_row[Columns.COMPANY_NAME]}
                         )
+                        # A brand-new ticker might really be a company we already
+                        # track under another symbol; tag it for review if so.
+                        if created:
+                            self.flag_new_stock(
+                                sa_stock, new_row[Columns.CIK].strip(),
+                                ticker_to_cik, stocks_by_cik, stocks_by_name,
+                            )
+                        sa_rating.sa_stock = sa_stock
+
+                        # If no date in column, use current date
                         sa_rating.date = new_row[Columns.DATE] if new_row[Columns.DATE] else datetime.today()
                         sa_rating.type = new_row[Columns.TYPE]
                         sa_rating.rank = new_row[Columns.RANK]
@@ -159,3 +183,28 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR("No files imported."))
         else:
             self.stdout.write(self.style.SUCCESS(f"{files_imported} files imported."))
+
+    def flag_new_stock(self, new_stock, csv_cik, ticker_to_cik, stocks_by_cik, stocks_by_name):
+        """Tag a newly-created stock if it looks like a company we already track.
+
+        Stores the SEC CIK (stable across ticker changes) and, when the stock
+        matches an existing one by CIK or name, sets a review note. Share-class
+        pairs (BRK.A/BRK.B) are noted but left unflagged. A cleaned dump already
+        carries the CIK in its own column, so we use that and only fall back to
+        the SEC mapping (by ticker) when the column is empty."""
+        cik = csv_cik or ticker_to_cik.get(normalize_ticker(new_stock.symbol), "")
+        new_stock.external_id = cik
+
+        match, matched_by = find_same_company(
+            new_stock.symbol, new_stock.name, cik, stocks_by_cik, stocks_by_name
+        )
+        if match:
+            new_stock.needs_review, new_stock.review_note = review_for_match(
+                new_stock.symbol, match.symbol, match.name, matched_by
+            )
+        new_stock.save()
+
+        # Remember this stock so later rows and files can match against it too
+        if cik:
+            stocks_by_cik.setdefault(cik, new_stock)
+        stocks_by_name.setdefault(normalize_company_name(new_stock.name), new_stock)

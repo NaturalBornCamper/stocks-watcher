@@ -135,6 +135,50 @@
             }
         },
         {
+            "name": "Find Symbol Changes",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "find_symbol_changes"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "2-Commands",
+                "order": 4
+            }
+        },
+        {
+            "name": "Clean Dumps",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "clean_dumps",
+                "data_dumps/seeking_alpha/_symbol_renames.csv",
+                "data_dumps/seeking_alpha/*.csv"
+            ],
+            "django": true,
+            "envFile": "${workspaceFolder}/.env",
+            "env": {
+                "PYTHONUNBUFFERED": "1",
+                "DJANGO_SETTINGS_MODULE": "settings.dev"
+            },
+            "presentation": {
+                "group": "2-Commands",
+                "order": 5
+            }
+        },
+        {
             "name": "Compile SA Score",
             "type": "debugpy",
             "request": "launch",
