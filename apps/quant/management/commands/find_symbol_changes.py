@@ -4,13 +4,15 @@ import pathlib
 from django.core.management.base import BaseCommand
 from django.db.models import Max
 
-from apps.quant.edgar import load_ticker_to_cik, normalize_ticker
 from apps.quant.models import SAStock
-from apps.quant.symbol_matching import find_same_company, review_for_match, normalize_company_name
+from apps.quant.symbols import SYMBOL_RENAMES_FILE
+from apps.quant.symbols.edgar import load_ticker_to_cik, normalize_ticker
+from apps.quant.symbols.matching import find_same_company, review_for_match, normalize_company_name
 
 # python manage.py find_symbol_changes
 # python manage.py find_symbol_changes --rescan
-# python manage.py find_symbol_changes --write-renames "data_dumps/seeking_alpha/_symbol_renames.csv"
+# python manage.py find_symbol_changes --write-renames               (updates data_dumps/_symbol_renames.csv)
+# python manage.py find_symbol_changes --write-renames "other/file.csv"
 
 
 class Command(BaseCommand):
@@ -27,10 +29,10 @@ class Command(BaseCommand):
                  "By default reviewed stocks are left untouched so your decisions stick.",
         )
         parser.add_argument(
-            "--write-renames", dest="write_renames", metavar="PATH",
-            help="Also write the flagged renames to this CSV so you can curate it and "
+            "--write-renames", dest="write_renames", nargs="?", const=SYMBOL_RENAMES_FILE, metavar="PATH",
+            help="Also write the flagged renames to a CSV so you can curate it and "
                  "feed it to the clean_dumps command. New rows are appended; rows already "
-                 "in the file are kept as-is so your edits are not lost.",
+                 f"in the file are kept as-is so your edits are not lost. Default: {SYMBOL_RENAMES_FILE}",
         )
 
     def handle(self, *args, **options):

@@ -17,7 +17,7 @@
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="RUN_TOOL" value="" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/manage.py" />
-    <option name="PARAMETERS" value="clean_dumps &quot;data_dumps/seeking_alpha/_symbol_renames.csv&quot; &quot;data_dumps/seeking_alpha/*.csv&quot;" />
+    <option name="PARAMETERS" value="clean_dumps" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

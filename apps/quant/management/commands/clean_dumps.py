@@ -3,11 +3,12 @@ import pathlib
 
 from django.core.management.base import BaseCommand
 
-from apps.quant.edgar import load_ticker_to_cik, normalize_ticker
+from apps.quant.symbols import SYMBOL_RENAMES_FILE
+from apps.quant.symbols.edgar import load_ticker_to_cik, normalize_ticker
 from utils.quant import Columns, COLUMN_NAME_VARIANTS
 
-# python manage.py clean_dumps "data_dumps/seeking_alpha/_symbol_renames.csv"
-# python manage.py clean_dumps "data_dumps/seeking_alpha/_symbol_renames.csv" "data_dumps/seeking_alpha/*.csv"
+# python manage.py clean_dumps                  (data_dumps/_symbol_renames.csv on all dumps)
+# python manage.py clean_dumps "other/renames.csv" "data_dumps/seeking_alpha/*.csv"
 
 
 class Command(BaseCommand):
@@ -19,7 +20,10 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument("renames_file", type=str, help="CSV of renames to apply")
+        parser.add_argument(
+            "renames_file", type=str, nargs="?", default=SYMBOL_RENAMES_FILE,
+            help=f"CSV of renames to apply (default: {SYMBOL_RENAMES_FILE})",
+        )
         parser.add_argument(
             "dumps", type=str, nargs="?", default="data_dumps/seeking_alpha/*.csv",
             help="Glob of dump CSVs to clean (default: data_dumps/seeking_alpha/*.csv)",

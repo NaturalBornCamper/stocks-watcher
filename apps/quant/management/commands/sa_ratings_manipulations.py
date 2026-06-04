@@ -41,7 +41,10 @@ class SeekingAlphaRatingsAggregator:
             self.data = defaultdict(dict)
 
         for csv_filepath in pathlib.Path(input_folder).rglob("*.csv"):
-            with csv_filepath.open("r") as f:
+            # Skip "_"-prefixed helper files (e.g. _symbol_renames.csv)
+            if csv_filepath.name.startswith("_"):
+                continue
+            with csv_filepath.open("r", encoding="utf-8") as f:
                 dict_reader = csv.DictReader(f)
 
                 for row in dict_reader:
@@ -101,7 +104,7 @@ class SeekingAlphaRatingsAggregator:
                 int(x[Columns.RANK])
             ))
 
-        with open(output_file, "w", newline='') as f:
+        with open(output_file, "w", newline='', encoding="utf-8") as f:
             dict_writer = csv.DictWriter(
                 f, fieldnames=COLUMN_NAME_VARIANTS.keys(), quoting=csv.QUOTE_ALL, lineterminator='\n'
             )

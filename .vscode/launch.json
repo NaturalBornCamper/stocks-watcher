@@ -163,9 +163,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "clean_dumps",
-                "data_dumps/seeking_alpha/_symbol_renames.csv",
-                "data_dumps/seeking_alpha/*.csv"
+                "clean_dumps"
             ],
             "django": true,
             "envFile": "${workspaceFolder}/.env",

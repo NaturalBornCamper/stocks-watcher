@@ -8,8 +8,8 @@ from django.core.management.base import BaseCommand
 
 from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
 from apps.quant.models import SAStock, SARating
-from apps.quant.edgar import load_ticker_to_cik, normalize_ticker
-from apps.quant.symbol_matching import find_same_company, review_for_match, normalize_company_name
+from apps.quant.symbols.edgar import load_ticker_to_cik, normalize_ticker
+from apps.quant.symbols.matching import find_same_company, review_for_match, normalize_company_name
 
 # python manage.py import_sa_ratings /path/to/your/csv_file.csv
 # python manage.py import_sa_ratings "SA Rating Dumps/2025-02-01.csv"

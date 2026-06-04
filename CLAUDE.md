@@ -50,6 +50,17 @@ python manage.py import_sa_ratings "data_dumps/seeking_alpha/*.csv"
 python manage.py sa_ratings_manipulations one_csv_per_date \
     "data_dumps/seeking_alpha/" "data_dumps/seeking_alpha/"
 
+# Find stocks that look like the same company under a new ticker (rename,
+# share class, acquisition): refreshes SEC CIKs and flags them for review in
+# the admin ("Find Symbol Changes"). --write-renames also updates the curated
+# rename list (data_dumps/_symbol_renames.csv).
+python manage.py find_symbol_changes [--rescan] [--write-renames]
+
+# Apply the curated renames to the dump CSVs and stamp each row's permanent
+# SEC id (CIK column). Run on dev, review the diff, commit ("Clean Dumps").
+# Full rebuild afterwards: db_operations empty_all_quant -> import -> compile_*.
+python manage.py clean_dumps
+
 # Compile per-stock scores after a new ratings dump. Each command skips rating
 # types already up to date for the latest dump. Run on a schedule via the cron
 # runner (resources/run-cronjob.sh) -- see "Cron jobs" below. Run configs:
@@ -74,6 +85,7 @@ python manage.py db_operations empty_sa_stocks
 python manage.py db_operations empty_sa_ratings
 python manage.py db_operations empty_compiled_scores
 python manage.py db_operations empty_compiled_scores_decayed
+python manage.py db_operations empty_compiled_scores_momentum
 python manage.py db_operations empty_all_quant
 ```
 
@@ -92,6 +104,7 @@ URL prefixes (project `urls.py`):
 
 **`apps/quant/`** — Seeking Alpha ratings, scoring algorithms, and the main frontend grids.
 - Models: `SAStock`, `SARating`, `CompiledSAScore`, `CompiledSAScoreDecayed`, `CompiledSAScoreMomentum`.
+- Ticker identity lives in `apps/quant/symbols/`: `edgar.py` downloads/caches the SEC ticker→CIK mapping (a CIK is a permanent company id that survives ticker/name changes; stored on `SAStock.external_id` and stamped as a `CIK` column in the dump CSVs), `matching.py` holds the same-company matching rules. The import flags suspected ticker changes for admin review (`needs_review` / `review_note` on `SAStock`); confirmed renames go into `data_dumps/_symbol_renames.csv`, which `clean_dumps` applies to the dumps. The Quant DB is disposable — fix the CSVs, then rebuild (empty → import → compile).
 - Score compiling lives in the `compile_sa_score*` management commands (`apps/quant/management/commands/`), triggered on a schedule by the cron runner. Each command skips rating types already up to date for the latest dump. Shared date/query helpers are in `apps/quant/scoring.py`. The old `/quant/cron/compile_sa_score_*/` URLs still work as thin wrappers (`apps/quant/views/cron.py`) that forward query params to the matching command and return its output as text.
 - Frontend views (`apps/quant/views/score.py`):
   - `/quant/sa/score` — all-time cumulative score
