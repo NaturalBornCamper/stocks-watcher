@@ -1,0 +1,22 @@
+{% load sa_rating_filters %}
+<table cellpadding="2" border="1" class="sortable">
+    <tr>
+        <th>Month</th>
+        {% get_types as types %}
+        {% for type in types.values %}
+            <th>{{ type }}</th>
+        {% endfor %}
+    </tr>
+    {% for month, cells in data.items %}
+        <tr>
+            {# Month links to the full per-month grid for cross-stock context #}
+            <td data-sort="{{ month|date:'Y-m' }}">
+                <a href="{% url 'quant.sa.month_date' date_str=month|date:'Y-m' %}">{{ month|date:'Y-m' }}</a>
+            </td>
+            {% for cell in cells.values %}
+                {# blank rank = not in this category's top-100 that month -> sort to the bottom with 999 #}
+                <td data-sort="{% if cell.rank %}{{ cell.rank }}{% else %}999{% endif %}"{% if cell.quant %} title="Quant rating: {{ cell.quant }}"{% endif %}>{{ cell.rank }}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>

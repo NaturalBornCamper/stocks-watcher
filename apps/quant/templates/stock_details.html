@@ -1,0 +1,10 @@
+{% extends 'seeking_alpha.html' %}
+
+{% block sa_content %}
+    <h2>
+        {{ sa_stock.symbol }} &mdash; {{ sa_stock.name }}
+        <a href="https://ca.finance.yahoo.com/quote/{{ sa_stock.symbol }}" target="Ya_{{ sa_stock.symbol }}">Ya</a>
+        <a href="https://seekingalpha.com/symbol/{{ sa_stock.symbol }}" target="SA_{{ sa_stock.symbol }}">SA</a>
+    </h2>
+    {% include "datatables/cols.category-rows.date.html" with data=months %}
+{% endblock %}

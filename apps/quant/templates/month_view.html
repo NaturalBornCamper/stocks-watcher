@@ -8,5 +8,5 @@
                class="{% if d == chosen_date %}active{% endif %}">{{ d|date:'Y-m' }}</a>
         {% endfor %}
     </nav>
-    {% include "datatables/h.category-v.stock.html" with data=quant_list value_to_display=value_to_display %}
+    {% include "datatables/cols.category-rows.stock.html" with data=quant_list value_to_display=value_to_display %}
 {% endblock %}

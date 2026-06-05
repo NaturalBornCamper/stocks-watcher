@@ -112,12 +112,13 @@ URL prefixes (project `urls.py`):
 - Models: `SAStock`, `SARating`, `CompiledSAScore`, `CompiledSAScoreDecayed`, `CompiledSAScoreMomentum`.
 - Ticker identity lives in `apps/quant/symbols/`: `edgar.py` downloads/caches the SEC ticker→CIK mapping (a CIK is a permanent company id that survives ticker/name changes; stored on `SAStock.external_id` and stamped as a `CIK` column in the dump CSVs by `fetch_edgar_ids`), `matching.py` knows share-class pairs (GOOG/GOOGL) so they are never merged, `dumps.py` reads/writes the dump CSVs. `rename_old_symbols` rewrites old dumps to today's tickers, using the newest monthly dump as the truth. At import, an unknown ticker whose CIK matches exactly one known stock renames that stock in place so its history stays attached; otherwise the stock is created as new. Stocks without a CIK match by ticker only (admin filter "has Edgar id: No" lists them for manual digging). The Quant DB stays disposable — the CSVs are the source of truth.
 - Score compiling lives in the `compile_sa_score*` management commands (`apps/quant/management/commands/`), triggered on a schedule by the cron runner. Each command skips rating types already up to date for the latest dump. Shared date/query helpers are in `apps/quant/scoring.py`. The old `/quant/cron/compile_sa_score_*/` URLs still work as thin wrappers (`apps/quant/views/cron.py`) that forward query params to the matching command and return its output as text.
-- Frontend views (`apps/quant/views/score.py`):
-  - `/quant/sa/score` — all-time cumulative score
-  - `/quant/sa/score_decayed` — recent-months exponential decay
-  - `/quant/sa/score_momentum` — momentum / rising-stars
-  - `/quant/sa/count` — # of months each stock has been ranked
-  - `/quant/sa/month[/<YYYY-MM>]` — single-month rank view with date selector
+- Frontend views are split by what the cells show — compiled scores in `apps/quant/views/score.py`, raw ranks in `apps/quant/views/ranks.py` (the cross-view URL-param helper `carry_context` lives in `apps/quant/views/shared.py`):
+  - `/quant/sa/score` — all-time cumulative score (score.py)
+  - `/quant/sa/score_decayed` — recent-months exponential decay (score.py)
+  - `/quant/sa/score_momentum` — momentum / rising-stars (score.py)
+  - `/quant/sa/count` — # of months each stock has been ranked (score.py)
+  - `/quant/sa/month[/<YYYY-MM>]` — single-month rank view with date selector (ranks.py)
+  - `/quant/sa/stock/<symbol>` — single-stock rank history, one row per month, one column per category (ranks.py)
 
 **`apps/watcher/`** — stock-price tracking, separate from quant.
 - Models: `Stock`, `Price`, `Alert`.

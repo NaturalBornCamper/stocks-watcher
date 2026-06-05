@@ -1,41 +1,12 @@
 TODO:
 
-MAYBE A GOOD IDEA:
--Replace API Calls with Google Sheets API, which can get adjusted close prices
- https://chatgpt.com/c/681989f2-167c-800e-b5b8-906976b89dc8 for idea how to do it, essentially this:
-1. Create the Google Sheet
- Create a tab (e.g., Prices)
- Use GOOGLEFINANCE("TICKER", "close", DATE(...)) to pull historical data
- Optionally use =TODAY() to automate "yesterday's" or "latest close"
-2. Build an Apps Script Web App
- Open the sheet → Extensions > Apps Script
- Write a script to:
- Accept GET requests with ticker and date
- Return the adjusted close price from the sheet
-3. Deploy the Script as a Web App
- Under Apps Script > Deploy > “Manage Deployments”
- Set access to “Anyone” (or restricted to your Google account)
- Note the URL — this becomes your new API endpoint
-4. Update Your Python App
- Replace old API calls with a requests.get() to your Google Sheet API
- Parse the JSON or text it returns
- Log or store results as before
-Bonus (Optional Enhancements)
- Add caching or retry logic if Google is slow or flaky
- Log all fetched values for debugging
- Build a bulk endpoint (e.g., return prices for 10 tickers at once)
-
-
 -PRIORITIZE
--Urgent Quant issue: Symbol or name change, or merge with other company breaks history. Find a solution, maybe ask AI for ideas
- Symbol changes in data dumps causes issues. For example when a top stock (SCZMF) changed to SCZMD, the system thought it was 2 different stocks so the score was reset.
 -Make the other quant views
  Quant page for a month, so I can basically see the same data as Excel, but split in different tables on the same page instead of one long table
   show all category, with checkboxes to hide/show them
  Average "quant" column of the Quant table for each stock instead of my own custom score
   What?
  Quant page for a certain stock, that will show its rank for each month, so I can have the details for a stock
-  Showing the history of each type of quant it was in
   showing a chart
  Quant page for a specific category. Not sure how the data will show on the page, TBD
  Page for average of each category.

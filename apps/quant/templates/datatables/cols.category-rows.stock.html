@@ -12,14 +12,14 @@
     {% for symbol, stock in data.items %}
         <tr class="{{ stock.row_class }}">
             <td>
-                {{ symbol }}
+                <a href="{% url 'quant.sa.stock' symbol=symbol %}" title="Monthly rank history for {{ symbol }}">{{ symbol }}</a>
             </td>
             <td>
                 <a href="https://ca.finance.yahoo.com/quote/{{ symbol }}" target="Ya_{{ symbol }}">Ya</a>
                 <a href="https://seekingalpha.com/symbol/{{ symbol }}" target="SA_{{ symbol }}">SA</a>
             </td>
             <td>
-                {{ stock.name }}
+                <a href="{% url 'quant.sa.stock' symbol=symbol %}" title="Monthly rank history for {{ symbol }}">{{ stock.name }}</a>
             </td>
             {% for type in stock.types.values %}
                 {% if value_to_display == "count" %}
