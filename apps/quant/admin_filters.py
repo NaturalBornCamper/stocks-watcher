@@ -18,6 +18,24 @@ class DateListFilter(SimpleListFilter):
         return queryset
 
 
+class HasEdgarIdFilter(SimpleListFilter):
+    """Filter SA stocks by whether we found their permanent SEC id (CIK).
+    Stocks without one are usually small or foreign names EDGAR does not list;
+    pick "No" to hunt for missing ids by hand."""
+    title = "has Edgar id"
+    parameter_name = "has_edgar_id"
+
+    def lookups(self, request, model_admin):
+        return [("yes", "Yes"), ("no", "No")]
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.exclude(external_id="")
+        if self.value() == "no":
+            return queryset.filter(external_id="")
+        return queryset
+
+
 class FirstSeenListFilter(SimpleListFilter):
     """Filter SA stocks by when they first showed up in a ratings dump.
     Picking a date shows stocks first seen on or after it, so the latest date

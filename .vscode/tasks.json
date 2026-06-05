@@ -1,0 +1,49 @@
+{
+    // Sequential helper tasks used by chained launch configurations.
+    // Mirrors the PyCharm "before launch" chain in
+    // Monthly_SA_Dumps_Aggregate_Edgar_IDs_Backport.xml -- keep the two in
+    // sync (see CLAUDE.md "Run Configurations").
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "SA dumps: merge category files",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "manage.py", "sa_ratings_manipulations", "one_csv_per_date",
+                "data_dumps/seeking_alpha/", "data_dumps/seeking_alpha/"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PYTHONUNBUFFERED": "1",
+                    "DJANGO_SETTINGS_MODULE": "settings.dev"
+                }
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "SA dumps: fetch Edgar IDs",
+            "type": "shell",
+            "command": "python",
+            "args": ["manage.py", "fetch_edgar_ids"],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PYTHONUNBUFFERED": "1",
+                    "DJANGO_SETTINGS_MODULE": "settings.dev"
+                }
+            },
+            "problemMatcher": []
+        },
+        {
+            // Steps 1+2 of the monthly operation; the "Monthly SA Dumps
+            // (Aggregate + Edgar IDs + Backport)" launch configuration runs
+            // this first, then rename_old_symbols as step 3
+            "label": "SA dumps: merge + fetch Edgar IDs",
+            "dependsOn": ["SA dumps: merge category files", "SA dumps: fetch Edgar IDs"],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Clean Dumps" type="PythonConfigurationType" factoryName="Python" folderName="Commands">
+  <configuration default="false" name="Monthly SA Dumps (Aggregate + Edgar IDs + Backport)" type="PythonConfigurationType" factoryName="Python" folderName="Commands">
     <module name="Stocks Watcher" />
     <option name="ENV_FILES" value="$PROJECT_DIR$/.env" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -17,12 +17,15 @@
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="RUN_TOOL" value="" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/manage.py" />
-    <option name="PARAMETERS" value="clean_dumps" />
+    <option name="PARAMETERS" value="rename_old_symbols" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
     <option name="REDIRECT_INPUT" value="false" />
     <option name="INPUT_FILE" value="" />
-    <method v="2" />
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Generate Monthly SA Dump" run_configuration_type="PythonConfigurationType" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Fetch Edgar IDs" run_configuration_type="PythonConfigurationType" />
+    </method>
   </configuration>
 </component>

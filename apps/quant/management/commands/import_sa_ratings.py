@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from utils.quant import find_matching_value, Columns, COLUMN_NAME_VARIANTS
 from apps.quant.models import SAStock, SARating
 from apps.quant.symbols.edgar import load_ticker_to_cik, normalize_ticker
-from apps.quant.symbols.matching import find_same_company, review_for_match, normalize_company_name
+from apps.quant.symbols.matching import is_share_class_pair
 
 # python manage.py import_sa_ratings /path/to/your/csv_file.csv
 # python manage.py import_sa_ratings "SA Rating Dumps/2025-02-01.csv"
@@ -83,20 +83,15 @@ class Command(BaseCommand):
             pattern = path.name
             # Sort so dumps import oldest-first; this lets us spot a company that
             # changed ticker (its old symbol is already in the DB by then). Skip
-            # "_"-prefixed helper files such as _symbol_renames.csv.
+            # "_"-prefixed helper/cache files.
             files_to_import = sorted(f for f in base_dir.rglob(pattern) if not f.name.startswith("_"))
         else:
             files_to_import.append(options['csv_file'])
 
-        # SEC ticker -> CIK map, plus in-memory lookups of stocks we already know,
-        # so we can tell when a "new" ticker is really an existing company.
+        # SEC ticker -> CIK map, used when a dump row has no CIK column of its own
         ticker_to_cik = load_ticker_to_cik()
-        stocks_by_cik = {}
-        stocks_by_name = {}
-        for stock in SAStock.objects.all():
-            if stock.external_id:
-                stocks_by_cik.setdefault(stock.external_id, stock)
-            stocks_by_name.setdefault(normalize_company_name(stock.name), stock)
+        # Warn only once per ticker when a dump's CIK contradicts the stored one
+        self.cik_mismatch_warned = set()
 
         files_imported = 0
         for csv_file in files_to_import:
@@ -114,18 +109,7 @@ class Command(BaseCommand):
                         for col_name, possible_names in COLUMN_NAME_VARIANTS.items():
                             new_row[col_name] = find_matching_value(row, possible_names)
 
-                        sa_stock, created = SAStock.objects.get_or_create(
-                            symbol=new_row[Columns.SEEKINGALPHA_SYMBOL],
-                            defaults={"name": new_row[Columns.COMPANY_NAME]}
-                        )
-                        # A brand-new ticker might really be a company we already
-                        # track under another symbol; tag it for review if so.
-                        if created:
-                            self.flag_new_stock(
-                                sa_stock, new_row[Columns.CIK].strip(),
-                                ticker_to_cik, stocks_by_cik, stocks_by_name,
-                            )
-                        sa_rating.sa_stock = sa_stock
+                        sa_rating.sa_stock = self.find_or_update_stock(new_row, ticker_to_cik)
 
                         # If no date in column, use current date
                         sa_rating.date = new_row[Columns.DATE] if new_row[Columns.DATE] else datetime.today()
@@ -184,27 +168,49 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS(f"{files_imported} files imported."))
 
-    def flag_new_stock(self, new_stock, csv_cik, ticker_to_cik, stocks_by_cik, stocks_by_name):
-        """Tag a newly-created stock if it looks like a company we already track.
+    def find_or_update_stock(self, new_row, ticker_to_cik):
+        """Find the stock a dump row belongs to, following ticker changes.
 
-        Stores the SEC CIK (stable across ticker changes) and, when the stock
-        matches an existing one by CIK or name, sets a review note. Share-class
-        pairs (BRK.A/BRK.B) are noted but left unflagged. A cleaned dump already
-        carries the CIK in its own column, so we use that and only fall back to
-        the SEC mapping (by ticker) when the column is empty."""
-        cik = csv_cik or ticker_to_cik.get(normalize_ticker(new_stock.symbol), "")
-        new_stock.external_id = cik
+        Match by ticker first. If the ticker is unknown but the row's permanent
+        SEC id (CIK) belongs to exactly one stock we already track -- and the
+        two tickers are not just share classes of one company -- then the
+        company changed ticker: rename the existing stock in place so all its
+        history stays attached. Rows without a CIK can only match by ticker
+        (the best we can do); an unseen ticker there becomes a new stock."""
+        symbol = new_row[Columns.SEEKINGALPHA_SYMBOL]
+        name = new_row[Columns.COMPANY_NAME]
+        # Cleaned dumps carry the CIK in their own column; fall back to a lookup
+        # in the SEC mapping for dumps that were not stamped yet
+        cik = new_row[Columns.CIK].strip() or ticker_to_cik.get(normalize_ticker(symbol), "")
 
-        match, matched_by = find_same_company(
-            new_stock.symbol, new_stock.name, cik, stocks_by_cik, stocks_by_name
-        )
-        if match:
-            new_stock.needs_review, new_stock.review_note = review_for_match(
-                new_stock.symbol, match.symbol, match.name, matched_by
-            )
-        new_stock.save()
+        sa_stock = SAStock.objects.filter(symbol=symbol).first()
+        if sa_stock:
+            # Fill in a missing permanent id, but never switch an existing one:
+            # a different id would mean another company reused this ticker
+            if cik and not sa_stock.external_id:
+                sa_stock.external_id = cik
+                sa_stock.save()
+            elif cik and sa_stock.external_id != cik and symbol not in self.cik_mismatch_warned:
+                self.cik_mismatch_warned.add(symbol)
+                self.stdout.write(self.style.WARNING(
+                    f"  {symbol}: dump says CIK {cik} but stock has {sa_stock.external_id}"
+                    " - ticker reused by another company?"
+                ))
+            return sa_stock
 
-        # Remember this stock so later rows and files can match against it too
+        # Unknown ticker: see if the permanent id points to a stock we already track
         if cik:
-            stocks_by_cik.setdefault(cik, new_stock)
-        stocks_by_name.setdefault(normalize_company_name(new_stock.name), new_stock)
+            same_company = list(SAStock.objects.filter(external_id=cik)[:2])
+            if len(same_company) == 1 and not is_share_class_pair(symbol, same_company[0].symbol):
+                # Same company, a single candidate, not a share class: rename it
+                # in place and keep all its ratings history attached
+                sa_stock = same_company[0]
+                old_symbol = sa_stock.symbol
+                sa_stock.symbol = symbol
+                sa_stock.name = name
+                sa_stock.save()
+                self.stdout.write(f"  Ticker change: {old_symbol} -> {symbol} ({name})")
+                return sa_stock
+
+        # Genuinely new stock (or one we cannot match without a CIK)
+        return SAStock.objects.create(symbol=symbol, name=name, external_id=cik)

@@ -40,8 +40,10 @@ class SeekingAlphaRatingsAggregator:
             # Two-level structure: result["main_group"]["third_key"] = {"csv_column1": "value1", ...}
             self.data = defaultdict(dict)
 
-        for csv_filepath in pathlib.Path(input_folder).rglob("*.csv"):
-            # Skip "_"-prefixed helper files (e.g. _symbol_renames.csv)
+        # Sorted so the merge order is deterministic: dated files first, then the
+        # raw top_*.csv exports -- the freshest raw data wins on duplicate rows
+        for csv_filepath in sorted(pathlib.Path(input_folder).rglob("*.csv")):
+            # Skip "_"-prefixed helper/cache files
             if csv_filepath.name.startswith("_"):
                 continue
             with csv_filepath.open("r", encoding="utf-8") as f:

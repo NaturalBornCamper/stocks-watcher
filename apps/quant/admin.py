@@ -1,13 +1,12 @@
 from django.contrib import admin
 
 from apps.quant.models import SAStock, SARating, CompiledSAScore, CompiledSAScoreDecayed, CompiledSAScoreMomentum
-from apps.quant.admin_filters import DateListFilter, FirstSeenListFilter
+from apps.quant.admin_filters import DateListFilter, FirstSeenListFilter, HasEdgarIdFilter
 
 
 class SAStockAdmin(admin.ModelAdmin):
-    list_display = ["symbol", "name", "needs_review", "review_note", "external_id", "stock"]
-    list_editable = ["needs_review"]
-    list_filter = ["needs_review", FirstSeenListFilter]
+    list_display = ["symbol", "name", "external_id", "stock"]
+    list_filter = [HasEdgarIdFilter, FirstSeenListFilter]
     search_fields = ["symbol", "name", "external_id"]
 
 

@@ -23,7 +23,9 @@ Run configurations live in **two parallel files** that must always be kept in sy
 - PyCharm: `.idea/runConfigurations/<Name>.xml` (one file per entry)
 - VS Code: `.vscode/launch.json` (single file with one entry per configuration)
 
-Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`Migration` ↔ `1-Migration`, `Commands` ↔ `2-Commands`, `Score Compilation` ↔ `3-Score Compilation`, `Price Watcher` ↔ `4-Price Watcher`; future `Tests` would map to `5-Tests`). Order numbers in `presentation.order` should be unique within a group.
+Whenever you add, rename, or change a Run configuration (new management command, new test module, etc.), update **both** files in the same change.
+
+Multi-step configurations are chained, never wrapped in a management command. PyCharm chains with "before launch" `RunConfigurationTask` entries (see `Monthly_SA_Dumps_Aggregate_Edgar_IDs_Backport.xml`); VS Code mirrors the same chain with a `dependsOrder: "sequence"` task in `.vscode/tasks.json`, wired to the launch entry via `preLaunchTask`. When a chain changes, all three places (PyCharm XML, `tasks.json`, `launch.json`) must stay in sync. The PyCharm `folderName` attribute corresponds to the VS Code `presentation.group` (`Migration` ↔ `1-Migration`, `Commands` ↔ `2-Commands`, `Score Compilation` ↔ `3-Score Compilation`, `Price Watcher` ↔ `4-Price Watcher`; future `Tests` would map to `5-Tests`). Order numbers in `presentation.order` should be unique within a group.
 
 Secrets / API keys do **not** belong in these files. Both PyCharm and VS Code load `.env` (gitignored) — PyCharm via `<option name="ENV_FILES" value="$PROJECT_DIR$/.env" />`, VS Code via `"envFile": "${workspaceFolder}/.env"`. Only `PYTHONUNBUFFERED` and `DJANGO_SETTINGS_MODULE` should stay in the run-config env (they are tied to run mode, not to the machine).
 
@@ -39,9 +41,13 @@ python manage.py runserver
 python manage.py makemigrations
 python manage.py migrate
 
-# Standard monthly SA refresh: reorganise raw dumps + import ("Refresh SA Ratings")
-# Wraps the two commands below; stops if the reorganise step fails.
-python manage.py refresh_sa_ratings
+# The standard monthly operation is the run configuration
+# "Monthly SA Dumps (Aggregate + Edgar IDs + Backport)": aggregate the fresh
+# per-category exports into the monthly CSV, stamp the new file's Edgar ids,
+# then backport current symbols to the older CSVs. No wrapper command on
+# purpose (keeps the codebase light): the config chains three commands --
+# sa_ratings_manipulations one_csv_per_date -> fetch_edgar_ids ->
+# rename_old_symbols (see "Run Configurations" above).
 
 # Import a month's SA ratings dump CSV(s) ("Import SA Ratings")
 python manage.py import_sa_ratings "data_dumps/seeking_alpha/*.csv"
@@ -50,16 +56,16 @@ python manage.py import_sa_ratings "data_dumps/seeking_alpha/*.csv"
 python manage.py sa_ratings_manipulations one_csv_per_date \
     "data_dumps/seeking_alpha/" "data_dumps/seeking_alpha/"
 
-# Find stocks that look like the same company under a new ticker (rename,
-# share class, acquisition): refreshes SEC CIKs and flags them for review in
-# the admin ("Find Symbol Changes"). --write-renames also updates the curated
-# rename list (data_dumps/_symbol_renames.csv).
-python manage.py find_symbol_changes [--rescan] [--write-renames]
-
-# Apply the curated renames to the dump CSVs and stamp each row's permanent
-# SEC id (CIK column). Run on dev, review the diff, commit ("Clean Dumps").
-# Full rebuild afterwards: db_operations empty_all_quant -> import -> compile_*.
-python manage.py clean_dumps
+# Monthly dump maintenance, run AFTER the reorganise step above ("Fetch Edgar
+# IDs" then "Rename Old Symbols"): stamp each row's permanent SEC id (CIK),
+# then rewrite old dumps so a company that changed ticker keeps one symbol
+# (same CIK = same company; share classes like GOOG/GOOGL are kept apart).
+# Review the git diff, commit.
+python manage.py fetch_edgar_ids ["data_dumps/seeking_alpha/2025-05-01.csv"]  # default = newest monthly dump
+python manage.py rename_old_symbols
+# (The one-time 2026-06 bulk cleanup tooling -- find_symbol_changes, clean_dumps
+# and the curated _symbol_renames.csv -- was deleted afterwards; recover from
+# git history if a no-CIK stock ever needs a manual retroactive rename.)
 
 # Compile per-stock scores after a new ratings dump. Each command skips rating
 # types already up to date for the latest dump. Run on a schedule via the cron
@@ -104,7 +110,7 @@ URL prefixes (project `urls.py`):
 
 **`apps/quant/`** — Seeking Alpha ratings, scoring algorithms, and the main frontend grids.
 - Models: `SAStock`, `SARating`, `CompiledSAScore`, `CompiledSAScoreDecayed`, `CompiledSAScoreMomentum`.
-- Ticker identity lives in `apps/quant/symbols/`: `edgar.py` downloads/caches the SEC ticker→CIK mapping (a CIK is a permanent company id that survives ticker/name changes; stored on `SAStock.external_id` and stamped as a `CIK` column in the dump CSVs), `matching.py` holds the same-company matching rules. The import flags suspected ticker changes for admin review (`needs_review` / `review_note` on `SAStock`); confirmed renames go into `data_dumps/_symbol_renames.csv`, which `clean_dumps` applies to the dumps. The Quant DB is disposable — fix the CSVs, then rebuild (empty → import → compile).
+- Ticker identity lives in `apps/quant/symbols/`: `edgar.py` downloads/caches the SEC ticker→CIK mapping (a CIK is a permanent company id that survives ticker/name changes; stored on `SAStock.external_id` and stamped as a `CIK` column in the dump CSVs by `fetch_edgar_ids`), `matching.py` knows share-class pairs (GOOG/GOOGL) so they are never merged, `dumps.py` reads/writes the dump CSVs. `rename_old_symbols` rewrites old dumps to today's tickers, using the newest monthly dump as the truth. At import, an unknown ticker whose CIK matches exactly one known stock renames that stock in place so its history stays attached; otherwise the stock is created as new. Stocks without a CIK match by ticker only (admin filter "has Edgar id: No" lists them for manual digging). The Quant DB stays disposable — the CSVs are the source of truth.
 - Score compiling lives in the `compile_sa_score*` management commands (`apps/quant/management/commands/`), triggered on a schedule by the cron runner. Each command skips rating types already up to date for the latest dump. Shared date/query helpers are in `apps/quant/scoring.py`. The old `/quant/cron/compile_sa_score_*/` URLs still work as thin wrappers (`apps/quant/views/cron.py`) that forward query params to the matching command and return its output as text.
 - Frontend views (`apps/quant/views/score.py`):
   - `/quant/sa/score` — all-time cumulative score

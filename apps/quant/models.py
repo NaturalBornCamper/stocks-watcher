@@ -11,10 +11,8 @@ class SAStock(models.Model):
     symbol = models.CharField(max_length=10, db_index=True, unique=True)
     name = models.CharField(max_length=255)
     # SEC CIK: a company id that stays the same even when the ticker/name changes.
+    # Stocks without one are foreign/OTC names that EDGAR does not list.
     external_id = models.CharField(max_length=20, blank=True, default="", db_index=True)
-    # Set when this stock looks like an existing company under a new symbol.
-    needs_review = models.BooleanField(default=False, db_index=True)
-    review_note = models.CharField(max_length=255, blank=True, default="")
 
 
 class SARating(models.Model):

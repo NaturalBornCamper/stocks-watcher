@@ -68,15 +68,19 @@
 
         // ---------- Commands ----------
         {
-            "name": "Refresh SA Ratings",
+            // The monthly operation: tasks.json aggregates the new dump files and
+            // fetches their Edgar IDs (preLaunchTask), then this config backports
+            // the current symbols to the older CSVs (rename_old_symbols)
+            "name": "Monthly SA Dumps (Aggregate + Edgar IDs + Backport)",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "refresh_sa_ratings"
+                "rename_old_symbols"
             ],
+            "preLaunchTask": "SA dumps: merge + fetch Edgar IDs",
             "django": true,
             "envFile": "${workspaceFolder}/.env",
             "env": {
@@ -135,14 +139,14 @@
             }
         },
         {
-            "name": "Find Symbol Changes",
+            "name": "Fetch Edgar IDs",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "find_symbol_changes"
+                "fetch_edgar_ids"
             ],
             "django": true,
             "envFile": "${workspaceFolder}/.env",
@@ -156,14 +160,14 @@
             }
         },
         {
-            "name": "Clean Dumps",
+            "name": "Rename Old Symbols",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
-                "clean_dumps"
+                "rename_old_symbols"
             ],
             "django": true,
             "envFile": "${workspaceFolder}/.env",
