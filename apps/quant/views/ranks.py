@@ -38,10 +38,30 @@ def stock(request, symbol: str):
             months[rating.date] = copy.deepcopy(default_types)
         months[rating.date][rating.type] = {"rank": rating.rank, "quant": rating.quant}
 
+    # Chart data: one line per category the stock has ever been ranked in,
+    # oldest month first. The X axis covers every month a dump exists (not just
+    # months this stock appears in), so a stock that vanished for a year shows
+    # a real hole in its lines instead of the line connecting across the absence.
+    chart_dates = list(
+        SARating.objects.values_list("date", flat=True).distinct().order_by("date")
+    )
+    chart_series = []
+    for slug, type_name in SARating.TYPES.items():
+        ranks = [
+            (months[d][slug]["rank"] or None) if d in months else None
+            for d in chart_dates
+        ]
+        if any(ranks):
+            chart_series.append({"label": type_name, "data": ranks})
+
     template = loader.get_template("stock_details.html")
     context = {
         "sa_stock": sa_stock,
         "months": months,
+        "chart_data": {
+            "labels": [d.strftime("%Y-%m") for d in chart_dates],
+            "series": chart_series,
+        },
         **carry_context(request),
     }
     return HttpResponse(template.render(context, request))

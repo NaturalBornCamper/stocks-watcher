@@ -12,7 +12,7 @@
     {% for symbol, stock in data.items %}
         <tr class="{{ stock.row_class }}">
             <td>
-                <a href="{% url 'quant.sa.stock' symbol=symbol %}" title="Monthly rank history for {{ symbol }}">{{ symbol }}</a>
+                {{ symbol }}
             </td>
             <td>
                 <a href="https://ca.finance.yahoo.com/quote/{{ symbol }}" target="Ya_{{ symbol }}">Ya</a>

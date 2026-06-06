@@ -1,4 +1,5 @@
 {% extends 'seeking_alpha.html' %}
+{% load static %}
 
 {% block sa_content %}
     <h2>
@@ -6,5 +7,19 @@
         <a href="https://ca.finance.yahoo.com/quote/{{ sa_stock.symbol }}" target="Ya_{{ sa_stock.symbol }}">Ya</a>
         <a href="https://seekingalpha.com/symbol/{{ sa_stock.symbol }}" target="SA_{{ sa_stock.symbol }}">SA</a>
     </h2>
+
+    {% if chart_data.series %}
+        {# Rank-over-time chart, one line per category (drawn by stock-chart.js) #}
+        <div class="rank-chart">
+            <canvas id="rank-chart-canvas"></canvas>
+        </div>
+    {% endif %}
+
     {% include "datatables/cols.category-rows.date.html" with data=months %}
 {% endblock %}
+
+{% block footer_js %}
+    {{ chart_data|json_script:"chart-data" }}
+    <script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
+    <script src="{% static 'js/stock-chart.js' %}"></script>
+{% endblock footer_js %}

@@ -267,3 +267,14 @@ tr.gated-yellow td { background: var(--gated-yellow); }
 tr.gated-red:hover    td { background: #a82828; }
 tr.gated-orange:hover td { background: #b86c20; }
 tr.gated-yellow:hover td { background: #a08a25; }
+
+/* --- Rank chart (stock details page) --------------------------------- */
+/* Chart.js fills the wrapper, so the wrapper sets the chart's size.      */
+/* Most of the viewport height: rank moves in the 1-20 band need room.    */
+.rank-chart {
+    position: relative;
+    height: 42.5vh;
+    min-height: 250px;
+    max-width: 1400px;
+    margin: 0 0 1.5em 0;
+}
