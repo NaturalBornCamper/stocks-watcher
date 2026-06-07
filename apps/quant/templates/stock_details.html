@@ -13,6 +13,7 @@
         <div class="rank-chart">
             <canvas id="rank-chart-canvas"></canvas>
         </div>
+        <p class="chart-hint">Shift + wheel: zoom time &middot; Alt + wheel: zoom rank &middot; drag: pan &middot; double-click: reset</p>
     {% endif %}
 
     {% include "datatables/cols.category-rows.date.html" with data=months %}
@@ -21,5 +22,7 @@
 {% block footer_js %}
     {{ chart_data|json_script:"chart-data" }}
     <script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
+    <script src="{% static 'js/vendor/hammer.min.js' %}"></script>
+    <script src="{% static 'js/vendor/chartjs-plugin-zoom.min.js' %}"></script>
     <script src="{% static 'js/stock-chart.js' %}"></script>
 {% endblock footer_js %}

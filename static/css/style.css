@@ -276,5 +276,11 @@ tr.gated-yellow:hover td { background: #a08a25; }
     height: 42.5vh;
     min-height: 250px;
     max-width: 1400px;
+    margin: 0 0 .3em 0;
+}
+/* Gesture cheat-sheet under the chart (zoom/pan wiring in stock-chart.js) */
+.chart-hint {
+    color: #888;
+    font-size: 0.85em;
     margin: 0 0 1.5em 0;
 }
